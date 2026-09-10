@@ -1,0 +1,68 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Testing
+coverage/
+.pytest_cache/
+htmlcov/
+
+# ML artifacts
+models/*.pkl
+models/*.joblib
+models/*.pt
+models/*.onnx
+*.h5
+datasets/
+
+# ML service artifacts + datasets (README schema docs stay tracked)
+apps/ml-service/data/*
+apps/ml-service/artifacts/*
+!apps/ml-service/data/README.md
+!apps/ml-service/artifacts/README.md
+apps/ml-service/data/*/*
+!apps/ml-service/data/*/README.md
+
+# Docker
+.docker/
+
+# Temporary files
+tmp/
+temp/
+.tmp/

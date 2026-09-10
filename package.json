@@ -1,0 +1,41 @@
+{
+  "name": "maasuraksha",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MaaSuraksha - Maternal Health Monitoring and Decision-Support Platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:ml\"",
+    "dev:frontend": "npm run dev --workspace=apps/frontend",
+    "dev:backend": "npm run dev --workspace=apps/backend",
+    "dev:ml": "npm run dev --workspace=apps/ml-service",
+    "build": "npm run build --workspace=packages/shared && npm run build --workspace=apps/frontend && npm run build --workspace=apps/backend",
+    "build:frontend": "npm run build --workspace=apps/frontend",
+    "build:backend": "npm run build --workspace=apps/backend",
+    "build:shared": "npm run build --workspace=packages/shared",
+    "start:frontend": "npm run start --workspace=apps/frontend",
+    "start:backend": "npm run start --workspace=apps/backend",
+    "start:ml": "npm run start --workspace=apps/ml-service",
+    "test": "npm run test --workspaces --if-present",
+    "test:frontend": "npm run test --workspace=apps/frontend",
+    "test:backend": "npm run test --workspace=apps/backend",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck:frontend": "npm run typecheck --workspace=apps/frontend",
+    "typecheck:backend": "npm run typecheck --workspace=apps/backend",
+    "typecheck:shared": "npm run typecheck --workspace=packages/shared",
+    "lint": "npm run lint --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present && rimraf node_modules"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "license": "MIT"
+}
