@@ -29,9 +29,60 @@ import { AssessmentResult } from "@/components/ml/AssessmentResult";
 import { ShapChart } from "@/components/ml/ShapChart";
 import { AssessmentStatusBadge } from "@/components/status/StatusLabels";
 
+/* react-hook-form's `valueAsNumber` converts an empty number input to NaN.
+   zod's `.optional()` only accepts `undefined`, so a blank optional field
+   failed validation and the form could never reach onSubmit. Convert blank
+   inputs to undefined instead of NaN. */
+const toNumberOrUndefined = (value: unknown) =>
+  value === "" || value === undefined || value === null ? undefined : Number(value);
+
+/* Schema-driven required indicators: a field shows a required * exactly when
+   the zod schema rejects an undefined value for it (i.e. it is non-optional).
+   This keeps the visible label in agreement with validation by construction. */
+function requiredFlags(
+  shape: Record<string, { isOptional(): boolean }>,
+  keys: readonly string[]
+): Record<string, boolean> {
+  const flags: Record<string, boolean> = {};
+  for (const key of keys) {
+    const field = shape[key];
+    flags[key] = Boolean(field && !field.isOptional());
+  }
+  return flags;
+}
+
+const MATERNAL_VISIBLE_FIELDS = [
+  "age",
+  "systolicBP",
+  "diastolicBP",
+  "bloodSugar",
+  "bodyTemp",
+  "heartRate",
+  "bmi",
+  "gestationalWeek",
+  "hemoglobin",
+] as const;
+
+const GDM_VISIBLE_FIELDS = [
+  "age",
+  "bmi",
+  "hdl",
+  "pregnancyCount",
+  "previousPregnancyGestation",
+  "familyHistory",
+  "unexplainedPrenatalLoss",
+  "largeChildOrBirthDefect",
+  "pcos",
+  "systolicBP",
+  "diastolicBP",
+  "hemoglobin",
+  "sedentaryLifestyle",
+] as const;
+
 /* ---------------- Maternal risk ---------------- */
 
 type MaternalForm = {
+  user: string;
   age: number;
   systolicBP: number;
   diastolicBP: number;
@@ -53,6 +104,14 @@ export function MaternalRiskPanel({ userId }: { userId: string }) {
   const history = useMaternalRiskHistory(userId, 10);
   const create = useCreateMaternalRisk();
 
+  /* Requiredness is read from the zod schema itself, so the * markers always
+     agree with validation. user is seeded (not rendered), so its "required"
+     flag is never shown. */
+  const required = requiredFlags(
+    schemas.maternalRisk.shape as Record<string, { isOptional(): boolean }>,
+    MATERNAL_VISIBLE_FIELDS
+  );
+
   const {
     register,
     handleSubmit,
@@ -60,7 +119,9 @@ export function MaternalRiskPanel({ userId }: { userId: string }) {
     formState: { errors },
   } = useForm<MaternalForm>({
     resolver: zodResolver(schemas.maternalRisk),
-    defaultValues: { age: 25, gestationalWeek: 12, bmi: 22 },
+    /* `user` is validated by schemas.maternalRisk but has no input in this
+       form; seed it from the prop so handleSubmit's resolver accepts it. */
+    defaultValues: { user: userId, age: 25, gestationalWeek: 12, bmi: 22 },
   });
 
   const onSubmit = (data: MaternalForm) => {
@@ -95,32 +156,32 @@ export function MaternalRiskPanel({ userId }: { userId: string }) {
   return (
     <Card title={t("assessments.maternal.title")}>
       <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6" noValidate>
-        <Field label={t("assessments.maternal.age")} htmlFor="mr-age" error={errors.age?.message} required>
-          <Input id="mr-age" type="number" {...register("age", { valueAsNumber: true })} />
+        <Field label={t("assessments.maternal.age")} htmlFor="mr-age" error={errors.age?.message} required={required.age}>
+          <Input id="mr-age" type="number" {...register("age", { setValueAs: toNumberOrUndefined })} />
         </Field>
-        <Field label={t("assessments.systolicBP")} htmlFor="mr-sbp" error={errors.systolicBP?.message} required>
-          <Input id="mr-sbp" type="number" {...register("systolicBP", { valueAsNumber: true })} />
+        <Field label={t("assessments.systolicBP")} htmlFor="mr-sbp" error={errors.systolicBP?.message} required={required.systolicBP}>
+          <Input id="mr-sbp" type="number" {...register("systolicBP", { setValueAs: toNumberOrUndefined })} />
         </Field>
-        <Field label={t("assessments.diastolicBP")} htmlFor="mr-dbp" error={errors.diastolicBP?.message} required>
-          <Input id="mr-dbp" type="number" {...register("diastolicBP", { valueAsNumber: true })} />
+        <Field label={t("assessments.diastolicBP")} htmlFor="mr-dbp" error={errors.diastolicBP?.message} required={required.diastolicBP}>
+          <Input id="mr-dbp" type="number" {...register("diastolicBP", { setValueAs: toNumberOrUndefined })} />
         </Field>
-        <Field label={t("assessments.maternal.bloodSugar")} htmlFor="mr-sugar" error={errors.bloodSugar?.message} required>
-          <Input id="mr-sugar" type="number" {...register("bloodSugar", { valueAsNumber: true })} />
+        <Field label={t("assessments.maternal.bloodSugar")} htmlFor="mr-sugar" error={errors.bloodSugar?.message} required={required.bloodSugar}>
+          <Input id="mr-sugar" type="number" {...register("bloodSugar", { setValueAs: toNumberOrUndefined })} />
         </Field>
-        <Field label={t("assessments.maternal.bodyTemp")} htmlFor="mr-temp" error={errors.bodyTemp?.message} required>
-          <Input id="mr-temp" type="number" step="0.1" {...register("bodyTemp", { valueAsNumber: true })} />
+        <Field label={t("assessments.maternal.bodyTemp")} htmlFor="mr-temp" error={errors.bodyTemp?.message} required={required.bodyTemp}>
+          <Input id="mr-temp" type="number" step="0.1" {...register("bodyTemp", { setValueAs: toNumberOrUndefined })} />
         </Field>
-        <Field label={t("assessments.maternal.heartRate")} htmlFor="mr-hr" error={errors.heartRate?.message} required>
-          <Input id="mr-hr" type="number" {...register("heartRate", { valueAsNumber: true })} />
+        <Field label={t("assessments.maternal.heartRate")} htmlFor="mr-hr" error={errors.heartRate?.message} required={required.heartRate}>
+          <Input id="mr-hr" type="number" {...register("heartRate", { setValueAs: toNumberOrUndefined })} />
         </Field>
-        <Field label={t("assessments.maternal.bmi")} htmlFor="mr-bmi" error={errors.bmi?.message} required>
-          <Input id="mr-bmi" type="number" step="0.1" {...register("bmi", { valueAsNumber: true })} />
+        <Field label={t("assessments.maternal.bmi")} htmlFor="mr-bmi" error={errors.bmi?.message} required={required.bmi}>
+          <Input id="mr-bmi" type="number" step="0.1" {...register("bmi", { setValueAs: toNumberOrUndefined })} />
         </Field>
-        <Field label={t("assessments.maternal.gestationalWeek")} htmlFor="mr-gw" error={errors.gestationalWeek?.message} required>
-          <Input id="mr-gw" type="number" {...register("gestationalWeek", { valueAsNumber: true })} />
+        <Field label={t("assessments.maternal.gestationalWeek")} htmlFor="mr-gw" error={errors.gestationalWeek?.message} required={required.gestationalWeek}>
+          <Input id="mr-gw" type="number" {...register("gestationalWeek", { setValueAs: toNumberOrUndefined })} />
         </Field>
-        <Field label={t("assessments.maternal.hemoglobin")} htmlFor="mr-hb" error={errors.hemoglobin?.message}>
-          <Input id="mr-hb" type="number" step="0.1" {...register("hemoglobin", { valueAsNumber: true })} />
+        <Field label={t("assessments.maternal.hemoglobin")} htmlFor="mr-hb" error={errors.hemoglobin?.message} required={required.hemoglobin}>
+          <Input id="mr-hb" type="number" step="0.1" {...register("hemoglobin", { setValueAs: toNumberOrUndefined })} />
         </Field>
         <div className="col-span-2 lg:col-span-3">
           <Button type="submit" loading={create.isPending}>
@@ -128,6 +189,8 @@ export function MaternalRiskPanel({ userId }: { userId: string }) {
           </Button>
         </div>
       </form>
+
+      <p className="text-xs text-gray-500 mb-4">{t("assessments.maternal.note")}</p>
 
       {create.isPending && <Spinner />}
 
@@ -140,7 +203,7 @@ export function MaternalRiskPanel({ userId }: { userId: string }) {
           recommendations={result.recommendations}
           message={result.message}
           modelVersion={result.modelVersion}
-          shapChart={<ShapChart shapValues={result.shapValues} />}
+          shapChart={<ShapChart kind="maternalRisk" shapValues={result.shapValues} inputValues={result.inputFeatures} modelVersion={result.modelVersion} />}
         />
       )}
 
@@ -164,15 +227,24 @@ export function MaternalRiskPanel({ userId }: { userId: string }) {
 
 /* ---------------- GDM ---------------- */
 
+// Stage 1 early risk assessment inputs (available before glucose testing).
+// Fasting/postprandial glucose and HbA1c are Stage 2 CLINICAL measurements and
+// are intentionally not part of the community/home risk form.
 type GDMForm = {
+  user: string;
   age: number;
-  bmi: number;
-  fastingGlucose: number;
-  postprandialGlucose?: number;
-  hba1c?: number;
-  gestationalWeek: number;
-  familyHistoryDiabetes: boolean;
-  previousGDM: boolean;
+  bmi?: number;
+  hdl?: number;
+  pregnancyCount: number;
+  previousPregnancyGestation: number;
+  familyHistory: boolean;
+  unexplainedPrenatalLoss: boolean;
+  largeChildOrBirthDefect: boolean;
+  pcos: boolean;
+  systolicBP?: number;
+  diastolicBP: number;
+  hemoglobin?: number;
+  sedentaryLifestyle: boolean;
 };
 
 export function GDMPanel({ userId }: { userId: string }) {
@@ -184,6 +256,14 @@ export function GDMPanel({ userId }: { userId: string }) {
   const history = useGDMHistory(userId, 10);
   const create = useCreateGDM();
 
+  /* Requiredness is read from the zod schema itself, so the * markers always
+     agree with validation. Boolean checkboxes (default false) are optional and
+     therefore never show *. user is seeded (not rendered). */
+  const required = requiredFlags(
+    schemas.gdm.shape as Record<string, { isOptional(): boolean }>,
+    GDM_VISIBLE_FIELDS
+  );
+
   const {
     register,
     handleSubmit,
@@ -191,7 +271,18 @@ export function GDMPanel({ userId }: { userId: string }) {
     formState: { errors },
   } = useForm<GDMForm>({
     resolver: zodResolver(schemas.gdm),
-    defaultValues: { age: 25, bmi: 22, gestationalWeek: 12, familyHistoryDiabetes: false, previousGDM: false },
+    defaultValues: {
+      user: userId,
+      age: 25,
+      pregnancyCount: 1,
+      previousPregnancyGestation: 0,
+      diastolicBP: 80,
+      familyHistory: false,
+      unexplainedPrenatalLoss: false,
+      largeChildOrBirthDefect: false,
+      pcos: false,
+      sedentaryLifestyle: false,
+    },
   });
 
   const onSubmit = (data: GDMForm) => {
@@ -199,18 +290,33 @@ export function GDMPanel({ userId }: { userId: string }) {
       {
         user: userId,
         age: Number(data.age),
-        bmi: Number(data.bmi),
-        fastingGlucose: Number(data.fastingGlucose),
-        postprandialGlucose: data.postprandialGlucose ? Number(data.postprandialGlucose) : undefined,
-        hba1c: data.hba1c ? Number(data.hba1c) : undefined,
-        gestationalWeek: Number(data.gestationalWeek),
-        familyHistoryDiabetes: data.familyHistoryDiabetes,
-        previousGDM: data.previousGDM,
+        bmi: data.bmi ? Number(data.bmi) : undefined,
+        hdl: data.hdl ? Number(data.hdl) : undefined,
+        pregnancyCount: Number(data.pregnancyCount),
+        previousPregnancyGestation: Number(data.previousPregnancyGestation),
+        familyHistory: data.familyHistory,
+        unexplainedPrenatalLoss: data.unexplainedPrenatalLoss,
+        largeChildOrBirthDefect: data.largeChildOrBirthDefect,
+        pcos: data.pcos,
+        systolicBP: data.systolicBP ? Number(data.systolicBP) : undefined,
+        diastolicBP: Number(data.diastolicBP),
+        hemoglobin: data.hemoglobin ? Number(data.hemoglobin) : undefined,
+        sedentaryLifestyle: data.sedentaryLifestyle,
       },
       {
         onSuccess: () => {
           push(t("assessments.submitted"), "success");
-          reset({ familyHistoryDiabetes: false, previousGDM: false });
+          reset({
+            user: userId,
+            pregnancyCount: 1,
+            previousPregnancyGestation: 0,
+            diastolicBP: 80,
+            familyHistory: false,
+            unexplainedPrenatalLoss: false,
+            largeChildOrBirthDefect: false,
+            pcos: false,
+            sedentaryLifestyle: false,
+          });
         },
         onError: (err) => push(getApiErrorMessage(err), "error"),
       }
@@ -222,27 +328,37 @@ export function GDMPanel({ userId }: { userId: string }) {
   return (
     <Card title={t("assessments.gdm.title")}>
       <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6" noValidate>
-        <Field label={t("assessments.gdm.age")} htmlFor="gdm-age" error={errors.age?.message} required>
-          <Input id="gdm-age" type="number" {...register("age", { valueAsNumber: true })} />
+        <Field label={t("assessments.gdm.age")} htmlFor="gdm-age" error={errors.age?.message} required={required.age}>
+          <Input id="gdm-age" type="number" {...register("age", { setValueAs: toNumberOrUndefined })} />
         </Field>
-        <Field label={t("assessments.gdm.bmi")} htmlFor="gdm-bmi" error={errors.bmi?.message} required>
-          <Input id="gdm-bmi" type="number" step="0.1" {...register("bmi", { valueAsNumber: true })} />
+        <Field label={t("assessments.gdm.bmi")} htmlFor="gdm-bmi" error={errors.bmi?.message} required={required.bmi}>
+          <Input id="gdm-bmi" type="number" step="0.1" {...register("bmi", { setValueAs: toNumberOrUndefined })} />
         </Field>
-        <Field label={t("assessments.gdm.fastingGlucose")} htmlFor="gdm-fg" error={errors.fastingGlucose?.message} required>
-          <Input id="gdm-fg" type="number" {...register("fastingGlucose", { valueAsNumber: true })} />
+        <Field label={t("assessments.gdm.hdl")} htmlFor="gdm-hdl" error={errors.hdl?.message} required={required.hdl}>
+          <Input id="gdm-hdl" type="number" step="0.1" {...register("hdl", { setValueAs: toNumberOrUndefined })} />
         </Field>
-        <Field label={t("assessments.gdm.postprandialGlucose")} htmlFor="gdm-pg" error={errors.postprandialGlucose?.message}>
-          <Input id="gdm-pg" type="number" {...register("postprandialGlucose", { valueAsNumber: true })} />
+        <Field label={t("assessments.gdm.pregnancyCount")} htmlFor="gdm-pc" error={errors.pregnancyCount?.message} required={required.pregnancyCount}>
+          <Input id="gdm-pc" type="number" {...register("pregnancyCount", { setValueAs: toNumberOrUndefined })} />
         </Field>
-        <Field label={t("assessments.gdm.hba1c")} htmlFor="gdm-hba1c" error={errors.hba1c?.message}>
-          <Input id="gdm-hba1c" type="number" step="0.1" {...register("hba1c", { valueAsNumber: true })} />
+        <Field label={t("assessments.gdm.previousPregnancyGestation")} htmlFor="gdm-ppg" error={errors.previousPregnancyGestation?.message} required={required.previousPregnancyGestation}>
+          <Input id="gdm-ppg" type="number" step="0.1" {...register("previousPregnancyGestation", { setValueAs: toNumberOrUndefined })} />
         </Field>
-        <Field label={t("assessments.gdm.gestationalWeek")} htmlFor="gdm-gw" error={errors.gestationalWeek?.message} required>
-          <Input id="gdm-gw" type="number" {...register("gestationalWeek", { valueAsNumber: true })} />
+        <Field label={t("assessments.gdm.systolicBP")} htmlFor="gdm-sbp" error={errors.systolicBP?.message} required={required.systolicBP} hint={t("assessments.gdm.systolicOptionalHint")}>
+          <Input id="gdm-sbp" type="number" {...register("systolicBP", { setValueAs: toNumberOrUndefined })} />
+        </Field>
+        <Field label={t("assessments.gdm.diastolicBP")} htmlFor="gdm-dbp" error={errors.diastolicBP?.message} required={required.diastolicBP}>
+          <Input id="gdm-dbp" type="number" {...register("diastolicBP", { setValueAs: toNumberOrUndefined })} />
+        </Field>
+        <Field label={t("assessments.gdm.hemoglobin")} htmlFor="gdm-hgb" error={errors.hemoglobin?.message} required={required.hemoglobin}>
+          <Input id="gdm-hgb" type="number" step="0.1" {...register("hemoglobin", { setValueAs: toNumberOrUndefined })} />
         </Field>
         <div className="col-span-2 lg:col-span-3 flex flex-col gap-2">
-          <Checkbox label={t("assessments.gdm.familyHistory")} registration={register("familyHistoryDiabetes")} />
-          <Checkbox label={t("assessments.gdm.previousGDM")} registration={register("previousGDM")} />
+          <Checkbox label={t("assessments.gdm.familyHistory")} registration={register("familyHistory")} />
+          <Checkbox label={t("assessments.gdm.unexplainedPrenatalLoss")} registration={register("unexplainedPrenatalLoss")} />
+          <Checkbox label={t("assessments.gdm.largeChildOrBirthDefect")} registration={register("largeChildOrBirthDefect")} />
+          <Checkbox label={t("assessments.gdm.pcos")} registration={register("pcos")} />
+          <Checkbox label={t("assessments.gdm.sedentaryLifestyle")} registration={register("sedentaryLifestyle")} />
+          <p className="text-xs text-gray-500 mt-1">{t("assessments.gdm.note")}</p>
         </div>
         <div className="col-span-2 lg:col-span-3">
           <Button type="submit" loading={create.isPending}>
@@ -262,7 +378,7 @@ export function GDMPanel({ userId }: { userId: string }) {
           recommendations={result.recommendations}
           message={result.message}
           modelVersion={result.modelVersion}
-          shapChart={<ShapChart shapValues={result.shapValues} />}
+          shapChart={<ShapChart kind="gdm" shapValues={result.shapValues} inputValues={result.inputFeatures} modelVersion={result.modelVersion} />}
         />
       )}
 
@@ -305,9 +421,11 @@ export function PPDPanel({ userId }: PPDPanelProps) {
     watch,
     reset,
     formState: { errors },
-  } = useForm<{ edinburghAnswers: number[]; screeningText?: string }>({
+  } = useForm<{ user: string; edinburghAnswers: number[]; screeningText?: string }>({
     resolver: zodResolver(schemas.ppd),
-    defaultValues: { edinburghAnswers: Array(10).fill(1), screeningText: "" },
+    /* `user` is part of schemas.ppd but has no input in this form; seed it
+       from the prop so handleSubmit's resolver accepts it. */
+    defaultValues: { user: userId, edinburghAnswers: Array(10).fill(1), screeningText: "" },
   });
 
   const values = watch("edinburghAnswers");
@@ -322,7 +440,7 @@ export function PPDPanel({ userId }: PPDPanelProps) {
       {
         onSuccess: () => {
           push(t("assessments.submitted"), "success");
-          reset({ edinburghAnswers: Array(10).fill(1), screeningText: "" });
+          reset({ user: userId, edinburghAnswers: Array(10).fill(1), screeningText: "" });
         },
         onError: (err) => push(getApiErrorMessage(err), "error"),
       }
@@ -330,6 +448,10 @@ export function PPDPanel({ userId }: PPDPanelProps) {
   };
 
   const result = create.data;
+
+  /* The EPDS answers are one required array in the schema (exactly 10 answers
+     in 0..3), so every question block is required. screeningText is optional. */
+  const epdsRequired = !schemas.ppd.shape.edinburghAnswers.isOptional();
 
   return (
     <Card title={t("assessments.ppd.title")}>
@@ -341,6 +463,7 @@ export function PPDPanel({ userId }: PPDPanelProps) {
             <div key={qKey} className="rounded-lg border border-gray-100 p-3">
               <p className="text-sm font-medium text-gray-800 mb-2">
                 {i + 1}. {t(`assessments.ppd.${qKey}`)}
+                {epdsRequired && <span className="text-red-500 ml-1">*</span>}
               </p>
               <div className="flex flex-wrap gap-2">
                 {EPDS_ANSWERS.map((val) => {

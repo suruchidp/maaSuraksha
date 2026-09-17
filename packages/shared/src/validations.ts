@@ -1,6 +1,27 @@
 import { z } from "zod";
 import { UserRole, Language } from "./types";
 
+/** Returns true when a YYYY-MM-DD (or ISO) date string falls after the current
+    local calendar date. Non-date strings and invalid calendar dates return
+    false so they keep their existing validation behavior. */
+export function isFutureCalendarDate(value: string, now: Date = new Date()): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (!match) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const input = new Date(year, month - 1, day);
+  if (
+    input.getFullYear() !== year ||
+    input.getMonth() !== month - 1 ||
+    input.getDate() !== day
+  ) {
+    return false;
+  }
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return input.getTime() > today.getTime();
+}
+
 export const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -29,7 +50,13 @@ export const healthMetricSchema = z.object({
   heartRate: z.number().min(40).max(200).optional(),
   temperature: z.number().min(35).max(42).optional(),
   hemoglobin: z.number().min(3).max(20).optional(),
-  date: z.string().optional(),
+  date: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || !isFutureCalendarDate(val),
+      "Metric date cannot be in the future"
+    ),
 });
 
 export const symptomSchema = z.object({
@@ -77,13 +104,18 @@ export const referralSchema = z.object({
   notes: z.string().max(1000).optional(),
 });
 
+// Maternal risk inputs use APPLICATION / EXTERNAL units: bloodSugar in mg/dL
+// and bodyTemp in degrees Celsius. The ML service converts these to the
+// saved UCI model's INTERNAL units (mmol/L and °F) once at the model-input
+// boundary (see apps/ml-service/app/ml/unit_conversion.py and
+// docs/MATERNAL_RISK_UNIT_CONVERSION.md). No additional conversion happens here.
 export const maternalRiskAssessmentSchema = z.object({
   user: z.string().min(1, "User is required"),
   age: z.number().min(10).max(100),
   systolicBP: z.number().min(50).max(300),
   diastolicBP: z.number().min(20).max(200),
-  bloodSugar: z.number().min(20).max(500),
-  bodyTemp: z.number().min(33).max(43),
+  bloodSugar: z.number().min(20).max(500), // mg/dL (external)
+  bodyTemp: z.number().min(33).max(43), // °C (external)
   heartRate: z.number().min(30).max(250),
   bmi: z.number().min(10).max(60),
   gestationalWeek: z.number().min(1).max(42),
@@ -92,14 +124,25 @@ export const maternalRiskAssessmentSchema = z.object({
 
 export const gdmAssessmentSchema = z.object({
   user: z.string().min(1, "User is required"),
+  // Stage 1 early risk assessment inputs (available before glucose testing).
   age: z.number().min(10).max(100),
-  bmi: z.number().min(10).max(60),
-  fastingGlucose: z.number().min(20).max(500),
+  bmi: z.number().min(10).max(60).optional(),
+  hdl: z.number().min(5).max(150).optional(),
+  pregnancyCount: z.number().min(1).max(10),
+  previousPregnancyGestation: z.number().min(0).max(10),
+  familyHistory: z.boolean().optional().default(false),
+  unexplainedPrenatalLoss: z.boolean().optional().default(false),
+  largeChildOrBirthDefect: z.boolean().optional().default(false),
+  pcos: z.boolean().optional().default(false),
+  systolicBP: z.number().min(50).max(300).optional(),
+  diastolicBP: z.number().min(20).max(200),
+  hemoglobin: z.number().min(2).max(25).optional(),
+  sedentaryLifestyle: z.boolean().optional().default(false),
+  // Stage 2 clinical glucose measurements: stored for record-keeping and
+  // clinical review, but NEVER sent to the early-risk model.
+  fastingGlucose: z.number().min(20).max(500).optional(),
   postprandialGlucose: z.number().min(20).max(700).optional(),
   hba1c: z.number().min(3).max(15).optional(),
-  gestationalWeek: z.number().min(1).max(42),
-  familyHistoryDiabetes: z.boolean().optional().default(false),
-  previousGDM: z.boolean().optional().default(false),
 });
 
 export const ppdAssessmentSchema = z.object({

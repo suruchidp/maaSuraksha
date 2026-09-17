@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
+import { isNotFound } from "@/lib/api";
 
 import { getPregnancy, upsertPregnancy } from "@/services/pregnancy";
 import { listHealthMetrics, createHealthMetric } from "@/services/healthMetrics";
@@ -77,8 +78,7 @@ export function usePregnancy(targetUserId?: string) {
     queryFn: () => getPregnancy(userId),
     retry: (count, error: unknown) => {
       // 404 = no profile yet
-      const status = (error as { response?: { status?: number } })?.response?.status;
-      return !(status === 404) && count < 1;
+      return !isNotFound(error) && count < 1;
     },
   });
 }
@@ -107,12 +107,13 @@ export function useHealthMetrics(targetUserId?: string, limit = 100) {
 
 export function useCreateHealthMetric() {
   const qc = useQueryClient();
+  const selfId = usePatientContext();
   return useMutation({
     mutationFn: ({ input, userId }: { input: unknown; userId?: string }) =>
       createHealthMetric(input as never, userId),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: qk.metrics("self") });
-      void qc.invalidateQueries({ queryKey: qk.metrics(undefined) });
+    onSuccess: (_, vars) => {
+      const userId = vars.userId ?? selfId ?? undefined;
+      void qc.invalidateQueries({ queryKey: qk.metrics(userId) });
     },
   });
 }

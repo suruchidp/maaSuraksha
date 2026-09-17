@@ -1,4 +1,9 @@
-"""Gestational Diabetes Mellitus (GDM) Detection (XGBoost + SHAP).
+"""Gestational Diabetes Mellitus (GDM) Early Risk Assessment (XGBoost + SHAP).
+
+Stage 1 of the two-stage maternal-care workflow. This model returns a GDM
+RISK ASSESSMENT / decision-support flag from variables available BEFORE
+diagnostic glucose testing. It is NOT a diagnostic tool: glucose tests (e.g.
+OGTT) are Stage 2 clinical measurements interpreted by a clinician.
 
 Works ONLY on a real artifact produced by scripts/train_gdm.py. When the
 artifact is absent the service reports MODEL_UNAVAILABLE and never invents
@@ -75,5 +80,9 @@ class GDMService(BaseModelService):
             "risk_level": "high" if positive else "low",
             "shap_values": shap_values,
             "model_version": self.model_version,
-            "message": f"GDM detection completed (model {self.model_version}).",
+            "message": (
+                f"GDM risk assessment / decision support completed (model "
+                f"{self.model_version}). This is a risk estimate for screening "
+                f"purposes, not a clinical diagnosis."
+            ),
         }

@@ -21,27 +21,34 @@ TOY_ROOT = TEST_ROOT / "toy_artifacts"
 # Plausible clinical ranges so the synthetic model is fit on clinical-scale
 # values. Realistic inputs (e.g. systolic 120 vs 190) then land in DIFFERENT
 # regions of the trained model, so SHAP values genuinely vary between inputs.
+# IMPORTANT: for `maternal_risk` the ranges are the MODEL-INTERNAL units the
+# service feeds XGBoost AFTER boundary conversion — blood_sugar in mmol/L and
+# body_temp in °F (the user-facing contract is mg/dL and °C; see
+# app/ml/unit_conversion.py). The toy model must be trained in the same units
+# it is served, otherwise synthetic SHAP/probability tests would be meaningless.
 _CLINICAL_RANGES: dict[str, dict[str, tuple[float, float]]] = {
     "maternal_risk": {
         "age": (15.0, 45.0),
         "systolic_bp": (90.0, 185.0),
         "diastolic_bp": (60.0, 120.0),
-        "blood_sugar": (70.0, 320.0),
-        "body_temp": (36.0, 40.0),
+        "blood_sugar": (4.0, 20.0),  # mmol/L (model internal; external is mg/dL)
+        "body_temp": (95.0, 104.0),  # °F (model internal; external is °C)
         "heart_rate": (55.0, 115.0),
-        "bmi": (17.0, 35.0),
-        "gestational_week": (5.0, 42.0),
-        "hemoglobin": (7.0, 16.0),
     },
     "gdm": {
         "age": (15.0, 45.0),
         "bmi": (17.0, 35.0),
-        "fasting_glucose": (70.0, 200.0),
-        "postprandial_glucose": (90.0, 260.0),
-        "hba1c": (4.0, 10.0),
-        "gestational_week": (5.0, 42.0),
-        "family_history_diabetes": (0.0, 1.0),
-        "previous_gdm": (0.0, 1.0),
+        "hdl": (25.0, 70.0),
+        "pregnancy_count": (1.0, 4.0),
+        "previous_pregnancy_gestation": (0.0, 2.0),
+        "family_history": (0.0, 1.0),
+        "unexplained_prenatal_loss": (0.0, 1.0),
+        "large_child_or_birth_defect": (0.0, 1.0),
+        "pcos": (0.0, 1.0),
+        "systolic_bp": (90.0, 185.0),
+        "diastolic_bp": (60.0, 124.0),
+        "hemoglobin": (8.8, 16.0),
+        "sedentary_lifestyle": (0.0, 1.0),
     },
 }
 
@@ -63,10 +70,14 @@ def _toy_tabular(category: str, n_samples: int = 600, seed: int = 7) -> None:
     rng = np.random.default_rng(seed)
     names = tabular.feature_names(category)
     ranges = _CLINICAL_RANGES[category]
+    spec = {f.name: f for f in tabular.FEATURE_SPECS[category]}
     X = np.empty((n_samples, len(names)), dtype=np.float32)
     for i, name in enumerate(names):
         lo, hi = ranges[name]
-        X[:, i] = rng.uniform(lo, hi, size=n_samples)
+        if spec[name].kind == "bool":
+            X[:, i] = (rng.uniform(lo, hi, size=n_samples) > 0.5).astype(float)
+        else:
+            X[:, i] = rng.uniform(lo, hi, size=n_samples)
 
     # Signal drawn from standardized features so thresholds are scale-free.
     mu = X.mean(axis=0)

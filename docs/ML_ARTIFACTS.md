@@ -11,10 +11,38 @@ Until an artifact exists, every inference endpoint returns
 
 | Model | Artifact path | Format |
 |-------|---------------|--------|
-| Maternal Risk | `artifacts/maternal_risk/` (`model.xgb` + `metadata.json`) | XGBoost `XGBClassifier` (binary) |
-| GDM | `artifacts/gdm/` (`model.xgb` + `metadata.json`) | XGBoost `XGBClassifier` (binary) |
+| Maternal Risk | `artifacts/maternal_risk/` (`model.xgb` + `metadata.json`) | XGBoost `XGBClassifier` (binary, 6 features) |
+| GDM (early-risk decision support) | `artifacts/gdm/` (`model.xgb` + `metadata.json`) | XGBoost `XGBClassifier` (binary, 13 features) |
 | PPD | `artifacts/ppd/` (`model/` HF dir + `metadata.json`) | DistilBERT sequence classifier (4 classes) |
 | Mood | `artifacts/mood/` (`model/` HF dir + `metadata.json`) | DistilBERT sequence classifier (3 classes) |
+
+The Maternal Risk model trains on **exactly six features**
+(`age, systolic_bp, diastolic_bp, blood_sugar, body_temp, heart_rate`) sourced
+from the UCI Maternal Health Risk dataset (DOI 10.24432/C5DP5D, CC BY 4.0).
+Its target is binary: `0 = low/moderate risk`, `1 = high risk` (transformed
+from the original three-class `RiskLevel`; `low risk + mid risk -> 0`,
+`high risk -> 1`). BMI, gestational week and hemoglobin are not model features.
+
+**Maternal Risk units — external vs internal.** The model was trained in the
+dataset's NATIVE units: `blood_sugar` in **mmol/L** and `body_temp` in **°F**.
+The application contract uses `bloodSugar` in **mg/dL** and `bodyTemp` in **°C**.
+The service converts mg/dL → mmol/L (`/ 18`) and °C → °F (`× 9/5 + 32`) exactly
+once at the model-input boundary (`app/ml/unit_conversion.py`); the artifact is
+never retrained or modified. Missing values are imputed with the metadata
+defaults, which are already in model units and are never re-converted. See
+`docs/MATERNAL_RISK_UNIT_CONVERSION.md`.
+
+The GDM model is a **Stage 1 early-risk decision-support** model (the
+two-stage maternal-care workflow): it trains on the **13 early-risk features**
+(`age, bmi, hdl, pregnancy_count, previous_pregnancy_gestation, family_history,
+unexplained_prenatal_loss, large_child_or_birth_defect, pcos, systolic_bp,
+diastolic_bp, hemoglobin, sedentary_lifestyle`) mapped from the local
+`GDM-Final2022` sheet. Its target is binary `0 = Non GDM`, `1 = GDM`. It is
+**not** a diagnostic tool: `OGTT` (diagnostic glucose test) and `Prediabetes`
+(leakage: equals the target in ~87% of rows) are excluded from model features,
+and fasting/postprandial glucose + HbA1c remain Stage 2 clinical measurements
+stored in the health record but never sent to the model. See
+`docs/GDM_MODEL_DESIGN.md`.
 
 An artifact is **SERVABLE** only when the payload exists AND `metadata.json`
 is valid (version, trained_at, model_name, metrics, artifact_type; plus
@@ -28,8 +56,8 @@ Datasets are placed in `apps/ml-service/data/<category>/raw/dataset.csv`
 venv active:
 
 ```bash
-python scripts/train_maternal_risk.py            # XGBoost, target `risk`
-python scripts/train_gdm.py                      # XGBoost, target `gdm`
+python -m scripts.train_maternal_risk               # XGBoost, target `risk`
+python -m scripts.train_gdm                         # XGBoost, target `gdm`
 python scripts/train_ppd.py                      # DistilBERT, 4 severity classes
 python scripts/train_mood.py                     # DistilBERT, 3 sentiment classes
 ```
@@ -42,7 +70,11 @@ Every training script:
 - reports real, held-out metrics on the test split,
 - writes `model.xgb` (or the HF `model/` dir) + `metadata.json` containing
   those real metrics, version, features, defaults, thresholds and a dataset
-  fingerprint.
+  fingerprint (plus UCI provenance and the binary target definition for
+  maternal risk).
+
+Laptop-safe: tabular training bounds XGBoost threads via `MAASURAKSHA_ML_THREADS`
+(default `2`); no GPU, no parallel training jobs.
 
 Full plan and licensing notes: `docs/DATASETS.md`.
 

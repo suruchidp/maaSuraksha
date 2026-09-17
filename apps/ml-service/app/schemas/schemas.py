@@ -25,26 +25,67 @@ class PredictionResult(BaseModel):
 
 
 class MaternalRiskInput(BaseModel):
-    age: float = Field(ge=10, le=100)
-    systolic_bp: float = Field(ge=50, le=300)
-    diastolic_bp: float = Field(ge=20, le=200)
-    blood_sugar: float = Field(ge=20, le=500)
-    body_temp: float = Field(ge=35, le=42)
-    heart_rate: float = Field(ge=30, le=250)
-    bmi: float = Field(ge=10, le=60)
-    gestational_week: float = Field(ge=1, le=42)
-    hemoglobin: float | None = Field(default=None, ge=2, le=25)
+    """Maternal Health Risk inputs — EXTERNAL / APPLICATION units.
+
+    The user-facing contract expresses blood glucose in mg/dL and body
+    temperature in degrees Celsius (all bounds below are in those EXTERNAL
+    units). The saved UCI model was trained in INTERNAL units (blood_sugar in
+    mmol/L, body_temp in °F); MaternalRiskService.predict converts mg/dL ->
+    mmol/L and °C -> °F exactly once at the model-input boundary (see
+    app/ml/unit_conversion.py). bmi/gestational_week/hemoglobin are recorded
+    in patient records but are NOT model features.
+    """
+
+    age: float = Field(ge=10, le=100, description="Maternal age (years)")
+    systolic_bp: float = Field(
+        ge=50, le=300, description="Systolic blood pressure (mmHg)"
+    )
+    diastolic_bp: float = Field(
+        ge=20, le=200, description="Diastolic blood pressure (mmHg)"
+    )
+    blood_sugar: float = Field(
+        ge=20,
+        le=500,
+        description="Blood glucose (mg/dL, external) — converted to mmol/L before inference",
+    )
+    body_temp: float = Field(
+        ge=35,
+        le=42,
+        description="Body temperature (°C, external) — converted to °F before inference",
+    )
+    heart_rate: float = Field(ge=30, le=250, description="Heart rate (bpm)")
+    bmi: float = Field(ge=10, le=60, description="BMI — recorded, NOT a model feature")
+    gestational_week: float = Field(
+        ge=1, le=42, description="Gestational week — recorded, NOT a model feature"
+    )
+    hemoglobin: float | None = Field(
+        default=None, ge=2, le=25, description="Hemoglobin (g/dL) — recorded, NOT a model feature"
+    )
 
 
 class GDMInput(BaseModel):
+    """Early GDM risk assessment inputs (Stage 1, decision support, NOT a diagnosis).
+
+    Only variables available BEFORE diagnostic glucose testing are accepted.
+    Fasting/postprandial glucose and HbA1c are Stage 2 clinical measurements
+    and are deliberately NOT part of this model input. bmi/hdl/systolic_bp/
+    hemoglobin are optional: when absent, the serving layer imputes the
+    median value learned on the training split (metadata `defaults`).
+    """
+
     age: float = Field(ge=10, le=100)
-    bmi: float = Field(ge=10, le=60)
-    fasting_glucose: float = Field(ge=20, le=500)
-    postprandial_glucose: float | None = Field(default=None, ge=20, le=700)
-    hba1c: float | None = Field(default=None, ge=3, le=15)
-    gestational_week: float = Field(ge=1, le=42)
-    family_history_diabetes: bool = False
-    previous_gdm: bool = False
+    bmi: float | None = Field(default=None, ge=10, le=60)
+    hdl: float | None = Field(default=None, ge=5, le=150)
+    pregnancy_count: float = Field(ge=1, le=10)
+    previous_pregnancy_gestation: float = Field(ge=0, le=10)
+    family_history: bool = False
+    unexplained_prenatal_loss: bool = False
+    large_child_or_birth_defect: bool = False
+    pcos: bool = False
+    systolic_bp: float | None = Field(default=None, ge=50, le=300)
+    diastolic_bp: float = Field(ge=20, le=200)
+    hemoglobin: float | None = Field(default=None, ge=2, le=25)
+    sedentary_lifestyle: bool = False
 
 
 class PPDScreeningInput(BaseModel):

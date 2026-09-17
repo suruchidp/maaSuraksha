@@ -18,6 +18,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from app.core.config import settings
 from app.ml import paths, tabular
 from scripts import common
 
@@ -44,7 +45,13 @@ def train_tabular(category: str, target: str, note: str = "") -> None:
     dataset_path = args.dataset or paths.raw_dataset_path(category)
     features = tabular.feature_names(category)
 
-    df = common.load_dataset(dataset_path, features, target)
+    if category == "maternal_risk":
+        df = common.load_maternal_risk_dataset(dataset_path, features, target)
+    elif category == "gdm":
+        df = common.load_gdm_early_risk_dataset(dataset_path, features, target)
+    else:
+        df = common.load_dataset(dataset_path, features, target)
+
     values = set(df[target].dropna().unique())
     if not set(values).issubset({0, 1}) or len(values) < 2:
         raise common.DatasetError(
@@ -54,9 +61,7 @@ def train_tabular(category: str, target: str, note: str = "") -> None:
     train, val, test = common.stratified_split(df, target, seed=args.seed)
     print(f"Loaded {len(df)} rows from {dataset_path} (train={len(train)}, val={len(val)}, test={len(test)})")
 
-    defaults = tabular.compute_defaults(
-        dataframe_to_matrix(train, category, {}), category
-    )
+    defaults = tabular.defaults_from_frame(train, category)
     X_train = dataframe_to_matrix(train, category, defaults)
     X_val = dataframe_to_matrix(val, category, defaults)
     X_test = dataframe_to_matrix(test, category, defaults)
@@ -74,6 +79,10 @@ def train_tabular(category: str, target: str, note: str = "") -> None:
         "random_state": args.seed,
         "eval_metric": "logloss",
         "early_stopping_rounds": 30,
+        # Laptop-safe: bound XGBoost thread usage (MAASURAKSHA_ML_THREADS,
+        # default 2). No GPU, no multi-model parallelism.
+        "n_jobs": settings.MAASURAKSHA_ML_THREADS,
+        "tree_method": "hist",
     }
     clf = XGBClassifier(**params)
     eval_set = [(X_train, y_train), (X_val, y_val)]
@@ -107,6 +116,25 @@ def train_tabular(category: str, target: str, note: str = "") -> None:
     model_path.parent.mkdir(parents=True, exist_ok=True)
     clf.save_model(str(model_path))
 
+    if category == "maternal_risk":
+        dataset = dict(common.MATERNAL_RISK_DATASET_INFO)
+        target_definition = (
+            "0 = low/moderate risk, 1 = high risk. Binary transformation of the "
+            "original UCI RiskLevel (3 classes): low risk + mid risk -> 0, "
+            "high risk -> 1."
+        )
+    elif category == "gdm":
+        dataset = dict(common.GDM_DATASET_INFO)
+        target_definition = (
+            "gdm is the Stage 1 EARLY RISK decision-support target: "
+            "0 = Non GDM, 1 = GDM (from 'Class Label(GDM /Non GDM)'). The model "
+            "is NOT a diagnostic tool; it assesses pre-glucose-testing risk only, "
+            "and clinical interpretation (Stage 2) remains with the clinician."
+        )
+    else:
+        dataset = None
+        target_definition = ""
+
     metadata = common.compose_tabular_metadata(
         category=category,
         version=version,
@@ -119,6 +147,8 @@ def train_tabular(category: str, target: str, note: str = "") -> None:
         params=params,
         data_fingerprint=common.dataset_fingerprint(dataset_path),
         note=note,
+        dataset=dataset,
+        target_definition=target_definition,
     )
     common.write_metadata(category, out_dir, metadata)
 

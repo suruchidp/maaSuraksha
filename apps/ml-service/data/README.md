@@ -13,7 +13,7 @@ variables, features, licensing and limitations).
 
 Layout:
 
-- `maternal_risk/raw/dataset.csv` — binary `risk` column (+ 9 features)
+- `maternal_risk/raw/dataset.csv` — binary `risk` column (0 = low/moderate, 1 = high) + 6 features (age, systolic_bp, diastolic_bp, blood_sugar, body_temp, heart_rate). UCI column names accepted and mapped automatically.
 - `gdm/raw/dataset.csv` — binary `gdm` column (+ 8 features)
 - `ppd/raw/dataset.csv` — `text` + `label` (none|mild|moderate|severe)
 - `mood/raw/dataset.csv` — `text` + `label` (negative|neutral|positive)

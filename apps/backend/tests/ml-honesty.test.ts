@@ -59,10 +59,14 @@ describe("ML honesty policy (pending state, no fabricated scores)", () => {
       .send({
         user: uid,
         age: 32,
-        bmi: 27.5,
-        fastingGlucose: 98,
-        gestationalWeek: 24,
-        familyHistoryDiabetes: true,
+        pregnancyCount: 2,
+        previousPregnancyGestation: 1,
+        diastolicBP: 78,
+        familyHistory: true,
+        unexplainedPrenatalLoss: false,
+        largeChildOrBirthDefect: false,
+        pcos: false,
+        sedentaryLifestyle: false,
       });
     expect(res.status).toBe(201);
     expect(res.body.data.status).toBe("pending");

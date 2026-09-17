@@ -1,0 +1,101 @@
+{
+  "category": "gdm",
+  "version": "20260916T065854Z",
+  "model_name": "XGBClassifier",
+  "artifact_type": "xgboost-classifier",
+  "trained_at": "2026-09-16T06:58:54.446716+00:00",
+  "target": "gdm",
+  "features": [
+    "age",
+    "bmi",
+    "hdl",
+    "pregnancy_count",
+    "previous_pregnancy_gestation",
+    "family_history",
+    "unexplained_prenatal_loss",
+    "large_child_or_birth_defect",
+    "pcos",
+    "systolic_bp",
+    "diastolic_bp",
+    "hemoglobin",
+    "sedentary_lifestyle"
+  ],
+  "defaults": {
+    "age": 32.0,
+    "bmi": 27.5,
+    "hdl": 49.0,
+    "pregnancy_count": 2.0,
+    "previous_pregnancy_gestation": 1.0,
+    "family_history": 1.0,
+    "unexplained_prenatal_loss": 0.0,
+    "large_child_or_birth_defect": 0.0,
+    "pcos": 0.0,
+    "systolic_bp": 132.0,
+    "diastolic_bp": 81.0,
+    "hemoglobin": 14.0,
+    "sedentary_lifestyle": 0.0
+  },
+  "metrics": {
+    "validation": {
+      "accuracy": 0.9678638941398866,
+      "precision": 0.9237668161434978,
+      "recall": 1.0,
+      "f1": 0.9603729603729604,
+      "roc_auc": 0.9968739667558388,
+      "pr_auc": 0.9951363937551578
+    },
+    "test": {
+      "accuracy": 0.9621928166351607,
+      "precision": 0.911504424778761,
+      "recall": 1.0,
+      "f1": 0.9537037037037037,
+      "roc_auc": 0.9975502720250083,
+      "pr_auc": 0.9962509270212258
+    }
+  },
+  "thresholds": {
+    "positive": 0.05
+  },
+  "params": {
+    "n_estimators": 800,
+    "max_depth": 5,
+    "learning_rate": 0.05,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "min_child_weight": 2,
+    "random_state": 42,
+    "eval_metric": "logloss",
+    "early_stopping_rounds": 30,
+    "n_jobs": 2,
+    "tree_method": "hist"
+  },
+  "data_fingerprint": "505844dbe785d0ef",
+  "note": "Early GDM risk assessment / decision support (Stage 1, not a diagnosis). 0 = Non GDM, 1 = GDM from 'Class Label(GDM /Non GDM)'. OGTT and Prediabetes are excluded from model features; a clinician interprets glucose tests in Stage 2.",
+  "dataset": {
+    "name": "GDM early-risk dataset (local copy)",
+    "source": "Single sheet 'GDM-Final2022' in apps/ml-service/data/gdm/raw/dataset.xlsx",
+    "url": "local dataset supplied to the project (external origin unverified; not cited)",
+    "doi": null,
+    "license": "locally supplied research copy; exact license to be confirmed",
+    "records": 3525,
+    "original_features": [
+      "Age",
+      "BMI",
+      "Class Label(GDM /Non GDM)",
+      "Dia BP",
+      "Family History",
+      "Gestation in previous Pregnancy",
+      "HDL",
+      "Hemoglobin",
+      "Large Child or Birth Default",
+      "No of Pregnancy",
+      "PCOS",
+      "Sedentary Lifestyle",
+      "Sys BP",
+      "unexplained prenetal loss"
+    ],
+    "original_target": "Class Label(GDM /Non GDM) (0 = Non GDM, 1 = GDM)",
+    "maasuraksha_target": "gdm (binary: 0 = Non GDM, 1 = GDM)"
+  },
+  "target_definition": "gdm is the Stage 1 EARLY RISK decision-support target: 0 = Non GDM, 1 = GDM (from 'Class Label(GDM /Non GDM)'). The model is NOT a diagnostic tool; it assesses pre-glucose-testing risk only, and clinical interpretation (Stage 2) remains with the clinician."
+}

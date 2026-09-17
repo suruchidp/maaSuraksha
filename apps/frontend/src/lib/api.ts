@@ -77,6 +77,10 @@ export function isUnauthorized(error: unknown): boolean {
   return axios.isAxiosError(error) && error.response?.status === 401;
 }
 
+export function isNotFound(error: unknown): boolean {
+  return axios.isAxiosError(error) && error.response?.status === 404;
+}
+
 function unwrap<T>(response: { data: ApiEnvelope<T> }): T {
   return response.data.data;
 }

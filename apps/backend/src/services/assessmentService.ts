@@ -126,6 +126,8 @@ export async function createGDMAssessment(
     user: userId,
     assessedBy: actor.userId,
     status: "pending",
+    // Stage 2 clinical glucose measurements — stored for record-keeping and
+    // clinical review, never sent to the early-risk model.
     fastingGlucose: input.fastingGlucose,
     postprandialGlucose: input.postprandialGlucose,
     hba1c: input.hba1c,
@@ -134,24 +136,34 @@ export async function createGDMAssessment(
     inputFeatures: {
       age: input.age,
       bmi: input.bmi,
-      fastingGlucose: input.fastingGlucose,
-      postprandialGlucose: input.postprandialGlucose ?? undefined,
-      hba1c: input.hba1c ?? undefined,
-      gestationalWeek: input.gestationalWeek,
-      familyHistoryDiabetes: input.familyHistoryDiabetes ?? false,
-      previousGDM: input.previousGDM ?? false,
+      hdl: input.hdl,
+      pregnancyCount: input.pregnancyCount,
+      previousPregnancyGestation: input.previousPregnancyGestation,
+      familyHistory: input.familyHistory ?? false,
+      unexplainedPrenatalLoss: input.unexplainedPrenatalLoss ?? false,
+      largeChildOrBirthDefect: input.largeChildOrBirthDefect ?? false,
+      pcos: input.pcos ?? false,
+      systolicBP: input.systolicBP,
+      diastolicBP: input.diastolicBP,
+      hemoglobin: input.hemoglobin,
+      sedentaryLifestyle: input.sedentaryLifestyle ?? false,
     },
   });
 
   const ml = await predictGDM({
     age: input.age,
     bmi: input.bmi,
-    fasting_glucose: input.fastingGlucose,
-    postprandial_glucose: input.postprandialGlucose ?? undefined,
-    hba1c: input.hba1c ?? undefined,
-    gestational_week: input.gestationalWeek,
-    family_history_diabetes: input.familyHistoryDiabetes ?? false,
-    previous_gdm: input.previousGDM ?? false,
+    hdl: input.hdl,
+    pregnancy_count: input.pregnancyCount,
+    previous_pregnancy_gestation: input.previousPregnancyGestation,
+    family_history: input.familyHistory ?? false,
+    unexplained_prenatal_loss: input.unexplainedPrenatalLoss ?? false,
+    large_child_or_birth_defect: input.largeChildOrBirthDefect ?? false,
+    pcos: input.pcos ?? false,
+    systolic_bp: input.systolicBP,
+    diastolic_bp: input.diastolicBP,
+    hemoglobin: input.hemoglobin,
+    sedentary_lifestyle: input.sedentaryLifestyle ?? false,
   });
 
   if (!ml.available) {
@@ -168,7 +180,7 @@ export async function createGDMAssessment(
         riskScore: ml.probability,
         riskFactors:
           ml.prediction === "positive"
-            ? ["Positive GDM screening (model)"]
+            ? ["Positive GDM risk screening (model)"]
             : [],
         shapValues: ml.shapValues ?? {},
         modelVersion: ml.modelVersion,
@@ -178,7 +190,7 @@ export async function createGDMAssessment(
   const updated = await GDMAssessment.findById(assessment._id);
   return {
     ...toGDMDto(updated ?? assessment),
-    message: `Assessment completed by the ML service (model ${ml.modelVersion}).`,
+    message: `GDM risk assessment completed by the ML service (model ${ml.modelVersion}). This is a risk estimate for screening, not a clinical diagnosis.`,
   };
 }
 

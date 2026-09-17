@@ -158,8 +158,17 @@ and `trimester`. `riskFactors` with any entries sets `isHighRisk`.
 
 `POST` body: `maternal-risk:` `age`, `systolicBP`, `diastolicBP`, `bloodSugar`,
 `bodyTemp`, `heartRate`, `bmi`, `gestationalWeek` (+ optional `hemoglobin`).
-`POST gdm:` `age`, `bmi`, `fastingGlucose`, `gestationalWeek` (+ optional
-`postprandialGlucose`, `hba1c`, `familyHistoryDiabetes`, `previousGDM`).
+Units for maternal-risk: `bloodSugar` is in **mg/dL**, `bodyTemp` in **°C**.
+These are application/external units; the ML service converts them to the
+model's internal units (mmol/L and °F) once at the model-input boundary — see
+`docs/MATERNAL_RISK_UNIT_CONVERSION.md`.
+`POST gdm:` (Stage 1 early-risk assessment / decision support): `age`,
+`pregnancyCount`, `previousPregnancyGestation`, `diastolicBP`, `familyHistory`
++ optional `bmi`, `hdl`, `systolicBP`, `hemoglobin`, `unexplainedPrenatalLoss`,
+`largeChildOrBirthDefect`, `pcos`, `sedentaryLifestyle`. Optional *clinical*
+glucose measurements (`fastingGlucose`, `postprandialGlucose`, `hba1c`) are
+stored for Stage 2 record-keeping but are **never sent to the model**. The
+result message states the prediction is a risk estimate, not a diagnosis.
 `POST ppd:` `edinburghAnswers` (required, 10 × 0–3) + optional `screeningText`
 (≤5000 chars) which triggers the DistilBERT free-text screening.
 

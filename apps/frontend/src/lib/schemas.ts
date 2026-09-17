@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { UserRole, Language } from "@maasuraksha/shared";
+import { UserRole, Language, isFutureCalendarDate } from "@maasuraksha/shared";
 import type { TFunction } from "i18next";
 
 /* i18n-aware Zod schemas that mirror the shared-package constraints.
@@ -61,7 +61,10 @@ export function buildSchemas(t: SchemaMessages) {
       heartRate: num("health.heartRate", 40, 200).optional(),
       temperature: num("health.temperature", 35, 42).optional(),
       hemoglobin: num("health.hemoglobin", 3, 20).optional(),
-      date: z.string().optional(),
+      date: z
+        .string()
+        .optional()
+        .refine((val) => !val || !isFutureCalendarDate(val), t("validation.futureDate")),
     }),
 
     symptom: z.object({
@@ -99,13 +102,18 @@ export function buildSchemas(t: SchemaMessages) {
     gdm: z.object({
       user: z.string().min(1, t("validation.required")),
       age: num("maternal.age", 10, 100),
-      bmi: num("maternal.bmi", 10, 60),
-      fastingGlucose: num("health.fastingGlucose", 20, 500),
-      postprandialGlucose: num("health.postprandialGlucose", 20, 700).optional(),
-      hba1c: num("health.hba1c", 3, 15).optional(),
-      gestationalWeek: num("pregnancy.week", 1, 42),
-      familyHistoryDiabetes: z.boolean().optional().default(false),
-      previousGDM: z.boolean().optional().default(false),
+      bmi: num("maternal.bmi", 10, 60).optional(),
+      hdl: num("gdm.hdl", 5, 150).optional(),
+      pregnancyCount: num("gdm.pregnancyCount", 1, 10),
+      previousPregnancyGestation: num("gdm.previousPregnancyGestation", 0, 10),
+      familyHistory: z.boolean().optional().default(false),
+      unexplainedPrenatalLoss: z.boolean().optional().default(false),
+      largeChildOrBirthDefect: z.boolean().optional().default(false),
+      pcos: z.boolean().optional().default(false),
+      systolicBP: num("bp.systolic", 50, 300).optional(),
+      diastolicBP: num("bp.diastolic", 20, 200),
+      hemoglobin: num("health.hemoglobin", 2, 25).optional(),
+      sedentaryLifestyle: z.boolean().optional().default(false),
     }),
 
     ppd: z.object({

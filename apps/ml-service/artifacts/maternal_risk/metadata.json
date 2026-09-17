@@ -1,0 +1,80 @@
+{
+  "category": "maternal_risk",
+  "version": "20260916T053033Z",
+  "model_name": "XGBClassifier",
+  "artifact_type": "xgboost-classifier",
+  "trained_at": "2026-09-16T05:30:33.402390+00:00",
+  "target": "risk",
+  "features": [
+    "age",
+    "systolic_bp",
+    "diastolic_bp",
+    "blood_sugar",
+    "body_temp",
+    "heart_rate"
+  ],
+  "defaults": {
+    "age": 27.0,
+    "systolic_bp": 120.0,
+    "diastolic_bp": 80.0,
+    "blood_sugar": 7.5,
+    "body_temp": 98.0,
+    "heart_rate": 76.0
+  },
+  "metrics": {
+    "validation": {
+      "accuracy": 0.9078947368421053,
+      "precision": 0.7755102040816326,
+      "recall": 0.926829268292683,
+      "f1": 0.8444444444444444,
+      "roc_auc": 0.9653922214897824,
+      "pr_auc": 0.9054947754769371
+    },
+    "test": {
+      "accuracy": 0.8627450980392157,
+      "precision": 0.6923076923076923,
+      "recall": 0.8780487804878049,
+      "f1": 0.7741935483870968,
+      "roc_auc": 0.9516550522648084,
+      "pr_auc": 0.9060010642692655
+    }
+  },
+  "thresholds": {
+    "high_risk": 0.15,
+    "critical_risk": 0.85
+  },
+  "params": {
+    "n_estimators": 800,
+    "max_depth": 5,
+    "learning_rate": 0.05,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "min_child_weight": 2,
+    "random_state": 42,
+    "eval_metric": "logloss",
+    "early_stopping_rounds": 30,
+    "n_jobs": 2,
+    "tree_method": "hist"
+  },
+  "data_fingerprint": "a1f7025719f84715",
+  "note": "Binary maternal risk (0 = low/moderate risk, 1 = high risk). Transformed from UCI RiskLevel (low risk + mid risk -> 0, high risk -> 1); NOT the original three-class UCI target.",
+  "dataset": {
+    "name": "UCI Maternal Health Risk",
+    "source": "UCI Machine Learning Repository",
+    "url": "https://archive.ics.uci.edu/dataset/863/maternal+health+risk",
+    "doi": "10.24432/C5DP5D",
+    "license": "CC BY 4.0",
+    "records": 1013,
+    "original_features": [
+      "Age",
+      "SystolicBP",
+      "DiastolicBP",
+      "BS",
+      "BodyTemp",
+      "HeartRate"
+    ],
+    "original_target": "RiskLevel (3 classes: low risk, mid risk, high risk)",
+    "maasuraksha_target": "risk (binary: 0 = low/moderate risk, 1 = high risk)"
+  },
+  "target_definition": "0 = low/moderate risk, 1 = high risk. Binary transformation of the original UCI RiskLevel (3 classes): low risk + mid risk -> 0, high risk -> 1."
+}

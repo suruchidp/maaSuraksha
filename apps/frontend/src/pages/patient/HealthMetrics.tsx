@@ -90,8 +90,8 @@ export default function HealthMetricsPage() {
       <Card title={t("metrics.logTitle")}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <Field label={t("metrics.date")} htmlFor="date">
-              <Input id="date" type="date" {...register("date")} />
+            <Field label={t("metrics.date")} htmlFor="date" error={errors.date?.message}>
+              <Input id="date" type="date" max={toLocalInputDate(new Date())} {...register("date")} />
             </Field>
             <Field label={t("metrics.systolicBP")} htmlFor="systolicBP" error={errors.systolicBP?.message}>
               <Input id="systolicBP" type="number" {...register("systolicBP", { valueAsNumber: true })} placeholder="120" />

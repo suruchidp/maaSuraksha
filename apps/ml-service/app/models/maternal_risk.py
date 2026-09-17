@@ -3,6 +3,12 @@
 Works ONLY on a real artifact produced by scripts/train_maternal_risk.py.
 When the artifact is absent the service reports MODEL_UNAVAILABLE and never
 invents a risk score or SHAP values.
+
+UNIT BOUNDARY: the saved UCI model expects blood_sugar in mmol/L and body_temp
+in degrees Fahrenheit, while the application contract uses mg/dL and degrees
+Celsius. User-facing values are converted ONCE at this boundary (see
+app/ml/unit_conversion.py and docs/MATERNAL_RISK_UNIT_CONVERSION.md); the
+artifact itself is never retrained or modified.
 """
 
 import logging
@@ -10,7 +16,7 @@ from typing import Any
 
 import numpy as np
 
-from app.ml import paths, tabular
+from app.ml import paths, tabular, unit_conversion
 from app.ml.exceptions import InvalidInputError, ModelUnavailableError
 from app.ml.shap_explainer import compute_shap_values
 from app.models.base_model import BaseModelService
@@ -65,9 +71,11 @@ class MaternalRiskService(BaseModelService):
             return self.unavailable_payload()
 
         try:
-            matrix, names = tabular.row_to_matrix(
-                input_data.model_dump(), self.name, self._defaults
-            )
+            # Convert mg/dL -> mmol/L and °C -> °F exactly once at this boundary.
+            # The conversion module is non-destructive and leaves missing values
+            # as None so the imputation layer uses model-unit defaults unchanged.
+            model_row = unit_conversion.to_maternal_model_units(input_data.model_dump())
+            matrix, names = tabular.row_to_matrix(model_row, self.name, self._defaults)
         except InvalidInputError as exc:
             return {
                 **self.unavailable_payload(f"Invalid input: {exc}"),

@@ -49,6 +49,42 @@ describe("request validation", () => {
     expect(res.body.error.code).toBe("BAD_REQUEST");
   });
 
+  const localYmd = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+
+  it("accepts a health metric dated today or in the past", async () => {
+    const past = new Date();
+    past.setDate(past.getDate() - 5);
+    const resToday = await api()
+      .post("/api/v1/health-metrics")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ weight: 60, date: localYmd(new Date()) });
+    const resPast = await api()
+      .post("/api/v1/health-metrics")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ weight: 60, date: localYmd(past) });
+    expect(resToday.status).toBe(201);
+    expect(resPast.status).toBe(201);
+  });
+
+  it("rejects a health metric dated in the future", async () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const res = await api()
+      .post("/api/v1/health-metrics")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ weight: 60, date: localYmd(tomorrow) });
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe("BAD_REQUEST");
+    if (res.body.error.details) {
+      expect(res.body.error.details[0].field).toBe("date");
+    }
+  });
+
   it("rejects symptoms with an empty array", async () => {
     const res = await api()
       .post("/api/v1/symptoms")

@@ -20,6 +20,8 @@ export type {
   AuditLog,
 } from "./types";
 
+export { isFutureCalendarDate } from "./validations";
+
 export { API_PREFIX, PAGINATION_DEFAULTS, RISK_FACTORS, COMMON_SYMPTOMS, EDUCATIONAL_CATEGORIES } from "./constants";
 
 export {

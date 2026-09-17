@@ -19,12 +19,17 @@ VALID_MATERNAL = {
 VALID_GDM = {
     "age": 30.0,
     "bmi": 24.5,
-    "fasting_glucose": 90.0,
-    "postprandial_glucose": 140.0,
-    "hba1c": 5.2,
-    "gestational_week": 24.0,
-    "family_history_diabetes": False,
-    "previous_gdm": False,
+    "hdl": 45.0,
+    "pregnancy_count": 2.0,
+    "previous_pregnancy_gestation": 1.0,
+    "family_history": False,
+    "unexplained_prenatal_loss": False,
+    "large_child_or_birth_defect": False,
+    "pcos": False,
+    "systolic_bp": 118.0,
+    "diastolic_bp": 78.0,
+    "hemoglobin": 11.5,
+    "sedentary_lifestyle": False,
 }
 
 

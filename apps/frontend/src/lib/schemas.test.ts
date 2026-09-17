@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildSchemas } from "@/lib/schemas";
+import { toLocalInputDate } from "@/lib/date";
 
 /* Minimal stub t that echoes the key (and interpolation) so we can assert on
    which validation rule fired without coupling the test to real translations. */
@@ -45,6 +46,23 @@ describe("buildSchemas", () => {
 
   it("treats empty optional metrics as valid", () => {
     expect(schemas.healthMetric.safeParse({}).success).toBe(true);
+  });
+
+  it("accepts a health metric dated today or in the past", () => {
+    const today = toLocalInputDate(new Date());
+    expect(schemas.healthMetric.safeParse({ weight: 60, date: today }).success).toBe(true);
+
+    const past = new Date();
+    past.setDate(past.getDate() - 3);
+    expect(schemas.healthMetric.safeParse({ weight: 60, date: toLocalInputDate(past) }).success).toBe(true);
+  });
+
+  it("rejects a health metric dated in the future", () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const r = schemas.healthMetric.safeParse({ weight: 60, date: toLocalInputDate(tomorrow) });
+    expect(r.success).toBe(false);
+    if (!r.success) expect(String(r.error.issues[0].message)).toContain("futureDate");
   });
 
   it("requires at least one symptom", () => {

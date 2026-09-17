@@ -37,9 +37,11 @@ def test_no_fabricated_inference_when_artifacts_absent(fastapi_client):
     payloads = {
         "/api/v1/maternal-risk/predict": VALID_MATERNAL,
         "/api/v1/gdm/predict": {
-            "age": 30.0, "bmi": 24.5, "fasting_glucose": 90.0,
-            "gestational_week": 24.0, "family_history_diabetes": False,
-            "previous_gdm": False,
+            "age": 30.0, "bmi": 24.5, "hdl": 45.0, "pregnancy_count": 2.0,
+            "previous_pregnancy_gestation": 1.0, "family_history": False,
+            "unexplained_prenatal_loss": False, "large_child_or_birth_defect": False,
+            "pcos": False, "systolic_bp": 118.0, "diastolic_bp": 78.0,
+            "hemoglobin": 11.5, "sedentary_lifestyle": False,
         },
         "/api/v1/ppd/predict": {"text": "I feel down lately", "language": "en"},
     }

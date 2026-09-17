@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -5,7 +6,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { usePregnancy, useUpsertPregnancy } from "@/hooks/queries";
 import { useCurrentLanguage } from "@/hooks/useAuth";
 import { buildSchemas } from "@/lib/schemas";
-import { getApiErrorMessage } from "@/lib/api";
+import { getApiErrorMessage, isNotFound } from "@/lib/api";
 import { useToastStore } from "@/stores/toastStore";
 import { formatDate, toLocalInputDate } from "@/lib/date";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -15,6 +16,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { TrimesterLabel } from "@/components/status/StatusLabels";
 
@@ -41,6 +43,7 @@ export default function PregnancyPage() {
   const {
     register,
     handleSubmit,
+    setFocus,
     formState: { errors },
   } = useForm<PregnancyForm>({
     resolver: zodResolver(schemas.pregnancyProfile),
@@ -50,6 +53,14 @@ export default function PregnancyPage() {
       para: pregnancy.data?.para ?? 0,
     },
   });
+
+  const [showCreateForm, setShowCreateForm] = useState(false);
+
+  useEffect(() => {
+    if (showCreateForm) {
+      setFocus("lmp");
+    }
+  }, [showCreateForm, setFocus]);
 
   const onSubmit = (data: PregnancyForm) => {
     upsert.mutate(
@@ -72,6 +83,9 @@ export default function PregnancyPage() {
 
   if (pregnancy.isLoading) return <Spinner />;
 
+  const hasProfile = Boolean(pregnancy.data);
+  const noProfile = pregnancy.isError && !hasProfile && isNotFound(pregnancy.error);
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -79,16 +93,27 @@ export default function PregnancyPage() {
         subtitle={t("pregnancy.subtitle")}
       />
 
-      {pregnancy.isError && !pregnancy.data ? (
-        (
+      {!hasProfile ? (
+        noProfile ? (
+          !showCreateForm ? (
+            <EmptyState
+              title={t("pregnancy.notFound")}
+              description={t("patient.pregnancy.ctaDescription")}
+              action={
+                <Button onClick={() => setShowCreateForm(true)}>
+                  {t("patient.dashboard.setUpPregnancy")}
+                </Button>
+              }
+            />
+          ) : null
+        ) : pregnancy.isError ? (
           <ErrorState
-            message={pregnancy.isLoading ? "" : t("pregnancy.notFound")}
+            message={getApiErrorMessage(pregnancy.error)}
             onRetry={() => pregnancy.refetch()}
           />
-        )
+        ) : null
       ) : (
-        <>
-          <Card title={t("pregnancy.currentProfile")}>
+        <Card title={t("pregnancy.currentProfile")}>
             <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <dt className="text-xs text-gray-500">{t("pregnancy.dueDate")}</dt>
@@ -149,8 +174,10 @@ export default function PregnancyPage() {
               )}
             </dl>
           </Card>
+      )}
 
-          <Card title={t("pregnancy.updateTitle")}>
+      {(hasProfile || showCreateForm) && (
+        <Card title={hasProfile ? t("pregnancy.updateTitle") : t("pregnancy.createTitle")}>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-md" noValidate>
               <Field
                 label={t("pregnancy.lmp")}
@@ -172,7 +199,6 @@ export default function PregnancyPage() {
               </Button>
             </form>
           </Card>
-        </>
       )}
     </div>
   );

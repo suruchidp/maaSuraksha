@@ -103,7 +103,9 @@
     "setUp": "Set up",
     "hide": "Hide",
     "actions": "Actions",
-    "system": "System"
+    "system": "System",
+    "yes": "Yes",
+    "no": "No"
   },
   "health": {
     "systolicBP": "Systolic BP",
@@ -131,7 +133,12 @@
       "hba1c": "HbA1c"
     },
     "maternal": { "age": "Age", "bmi": "BMI" },
-    "pregnancy": { "week": "Gestational week" }
+    "pregnancy": { "week": "Gestational week" },
+    "gdm": {
+      "hdl": "HDL Cholesterol",
+      "pregnancyCount": "Number of Pregnancies",
+      "previousPregnancyGestation": "Previous Pregnancy Gestation"
+    }
   },
   "validation": {
     "required": "This field is required",
@@ -143,6 +150,7 @@
     "rangeMax": "{{field}} must be at most {{value}}",
     "invalidNumber": "Please enter a valid number",
     "invalidDate": "Please enter a valid date",
+    "futureDate": "Date cannot be in the future",
     "invalidTime": "Time must be in HH:MM format",
     "atLeastOneSymptom": "Select at least one symptom",
     "atLeastOneMeal": "Add at least one meal",
@@ -203,6 +211,7 @@
       "multiple_pregnancy": "Multiple pregnancy"
     },
     "updateTitle": "Update Profile",
+    "createTitle": "Create pregnancy profile",
     "gravida": "Gravida (number of pregnancies)",
     "para": "Para (number of live births)",
     "saved": "Pregnancy profile saved",
@@ -301,19 +310,27 @@
       "gestationalWeek": "Gestational Week",
       "hemoglobin": "Hemoglobin (g/dL)",
       "result": "Maternal Risk Result",
-      "history": "Previous Results"
+      "history": "Previous Results",
+      "note": "BMI, gestational week and hemoglobin are recorded as clinical information in your health record. The maternal risk model uses age, blood pressure, blood sugar, temperature and heart rate."
     },
     "gdm": {
-      "title": "Gestational Diabetes Risk",
+      "title": "GDM Risk Assessment (Decision Support)",
+      "note": "This is an early risk assessment and does NOT diagnose gestational diabetes. If your risk is high, please attend glucose testing as recommended by your care provider.",
       "age": "Age",
       "bmi": "BMI",
-      "fastingGlucose": "Fasting Glucose",
-      "postprandialGlucose": "Post-prandial Glucose",
-      "hba1c": "HbA1c",
-      "gestationalWeek": "Gestational Week",
+      "hdl": "HDL Cholesterol",
+      "pregnancyCount": "Number of Pregnancies",
+      "previousPregnancyGestation": "Gestation in Previous Pregnancy (weeks)",
       "familyHistory": "Family history of diabetes",
-      "previousGDM": "Previous gestational diabetes",
-      "result": "GDM Risk Result",
+      "unexplainedPrenatalLoss": "Unexplained prenatal loss",
+      "largeChildOrBirthDefect": "Previous large child or birth defect",
+      "pcos": "PCOS",
+      "systolicBP": "Systolic BP",
+      "systolicOptionalHint": "Optional. The early-risk model was trained on data where systolic readings were often not recorded, and it gives an accurate estimate from the remaining factors. When left blank it uses its training median (132 mmHg).",
+      "diastolicBP": "Diastolic BP",
+      "hemoglobin": "Hemoglobin",
+      "sedentaryLifestyle": "Sedentary lifestyle",
+      "result": "GDM Risk Assessment Result",
       "history": "Previous Results"
     },
     "ppd": {
@@ -351,6 +368,18 @@
     "shapTitle": "Contributing Factors",
     "shapDescription": "How much each factor influenced this result.",
     "shapValue": "Contribution",
+    "shapPatientValueLabel": "Patient value",
+    "shapModelUsedLabel": "Model used",
+    "shapContributionLabel": "SHAP contribution",
+    "shapDirectionLabel": "Direction",
+    "shapHigherRisk": "Pushed prediction toward higher-risk class",
+    "shapLowerRisk": "Pushed prediction toward lower-risk class",
+    "shapNoEffect": "No effect on the prediction",
+    "shapImputationNote": "imputed from training data",
+    "shapImputedGeneric": "Imputed by the model from training data (median)",
+    "shapLegendNote": "Positive contributions pushed the prediction toward the higher-risk class; negative contributions pushed it toward the lower-risk class.",
+    "shapChartRelationship": "The bars below show the same real SHAP contributions as the breakdown above, ordered from largest to smallest.",
+    "shapCaveatNote": "SHAP values are the model's real per-feature contributions for the value entered. They are not a diagnosis, and a listed feature does not confirm that a condition or history is present.",
     "modelUnavailable": "Risk model temporarily unavailable",
     "honestyNote": "No result was generated. Please try again or contact your care provider.",
     "serviceUnavailable": "The assessment service is not reachable. No risk result is shown."
