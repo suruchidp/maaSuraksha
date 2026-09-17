@@ -301,9 +301,15 @@ export interface AppointmentDTO {
 }
 
 export interface EducationalContentDTO {
+  titleLocalized?: Record<Language, string>;
+  bodyLocalized?: Record<Language, string>;
+  sources?: {title:string;url:string}[];
+  isSaved?: boolean;
+  readAt?: string;
+  relevance?: "stage" | "risk" | "general";
   id: string;
-  title: Record<Language, string>;
-  body: Record<Language, string>;
+  title: Record<Language, string> | string;
+  body: Record<Language, string> | string;
   category: string;
   tags: string[];
   isActive: boolean;

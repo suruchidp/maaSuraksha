@@ -3,7 +3,8 @@ import { EducationalContentDTO } from "@/lib/types";
 import type { EducationalContentInput } from "@maasuraksha/shared";
 
 export async function listEducation(params?: Record<string, unknown>) {
-  return httpList<EducationalContentDTO>("/education", params);
+  const { manage, ...query } = params ?? {};
+  return httpList<EducationalContentDTO>(manage ? "/education/manage" : "/education", query);
 }
 
 export async function getEducation(id: string, lang?: string) {

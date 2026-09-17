@@ -1,3 +1,5 @@
+import { seedEducationResources } from "./services/educationContent";
+import { EducationProgress } from "./models/EducationProgress";
 import { startAlertWorker } from "./services/alertWorker";
 import { Alert } from "./models/Alert";
 import express from "express";
@@ -85,6 +87,8 @@ async function startServer(): Promise<import("http").Server> {
   try {
     await connectDB();
     await Alert.init();
+    await EducationProgress.init();
+    await seedEducationResources();
     const server = app.listen(config.port, () => {
       console.log(
         `MaaSuraksha backend running on port ${config.port} in ${config.nodeEnv} mode`

@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { useEducation, useCreateEducation, useUpdateEducation } from "@/hooks/queries";
-import { EDUCATIONAL_CATEGORIES, Language } from "@maasuraksha/shared";
+import { EDUCATIONAL_CATEGORIES, Language, educationalContentSchema } from "@maasuraksha/shared";
 import { getApiErrorMessage } from "@/lib/api";
 import { useToastStore } from "@/stores/toastStore";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -30,11 +30,13 @@ interface ContentDraft {
   category: string;
   tags: string;
   isActive: boolean;
+  sources: {title:string;url:string}[];
   title: Record<Language, string>;
   body: Record<Language, string>;
 }
 
 const emptyDraft = (): ContentDraft => ({
+  sources: [],
   category: "pregnancy",
   tags: "",
   isActive: true,
@@ -45,7 +47,9 @@ const emptyDraft = (): ContentDraft => ({
 export default function AdminEducationPage() {
   const { t } = useTranslation();
   const push = useToastStore((s) => s.push);
-  const education = useEducation({});
+  const [page,setPage] = useState(1);
+  const [saveError,setSaveError] = useState("");
+  const education = useEducation({ manage:true, page, limit:20 });
   const create = useCreateEducation();
   const update = useUpdateEducation();
 
@@ -54,36 +58,50 @@ export default function AdminEducationPage() {
 
   const openCreate = () => {
     setLangTab(Language.EN);
+    setSaveError("");
     setEditing(emptyDraft());
   };
   const openEdit = (item: EducationalContentDTO) => {
     setLangTab(Language.EN);
+    setSaveError("");
     setEditing({
+      sources: item.sources ?? [],
       id: item.id,
       category: item.category,
       tags: (item.tags ?? []).join(", "),
       isActive: item.isActive,
-      title: { ...item.title },
-      body: { ...item.body },
+      title: item.titleLocalized ?? {en:pickLocalized(item.title,Language.EN),hi:"",kn:""},
+      body: item.bodyLocalized ?? {en:pickLocalized(item.body,Language.EN),hi:"",kn:""},
     });
   };
 
   const save = () => {
-    if (!editing) return;
+    if (!editing || create.isPending || update.isPending) return;
     const payload = {
+      sources: editing.sources,
+      isActive: editing.isActive,
       title: editing.title,
       body: editing.body,
       category: editing.category,
       tags: editing.tags.split(",").map((s) => s.trim()).filter(Boolean),
     };
+    const parsed = educationalContentSchema.safeParse(payload);
+    if (!parsed.success) {
+      const message = parsed.error.issues.some(issue => issue.path[0] === "title" || issue.path[0] === "body") ? t("education.contentRequired") : parsed.error.issues[0]?.message ?? t("common.error");
+      setSaveError(message);
+      return;
+    }
+    setSaveError("");
+    const fail = (error:unknown) => {setSaveError(getApiErrorMessage(error));push(getApiErrorMessage(error),"error");};
     const finish = () => {
+      setPage(1);
       push(t("admin.education.saved"), "success");
       setEditing(null);
     };
     if (editing.id) {
-      update.mutate({ id: editing.id, patch: { ...payload, isActive: editing.isActive } }, { onSuccess: finish, onError: (e) => push(getApiErrorMessage(e), "error") });
+      update.mutate({ id: editing.id, patch: { ...payload, isActive: editing.isActive } }, { onSuccess: finish, onError: fail });
     } else {
-      create.mutate(payload, { onSuccess: finish, onError: (e) => push(getApiErrorMessage(e), "error") });
+      create.mutate(payload, { onSuccess: finish, onError: fail });
     }
   };
 
@@ -125,9 +143,10 @@ export default function AdminEducationPage() {
         </div>
       )}
 
+      {(education.data?.totalPages ?? 0) > 1 && <nav className="flex justify-between items-center" aria-label={t("education.pagination")}><Button variant="outline" disabled={page===1} onClick={()=>setPage(page-1)}>{t("education.previous")}</Button><span>{t("education.page",{page,total:education.data?.totalPages})}</span><Button variant="outline" disabled={page >= (education.data?.totalPages ?? 1)} onClick={()=>setPage(page+1)}>{t("education.next")}</Button></nav>}
       <Modal
         open={Boolean(editing)}
-        onClose={() => setEditing(null)}
+        onClose={() => {if(!create.isPending && !update.isPending) setEditing(null);}}
         title={editing?.id ? t("admin.education.edit") : t("admin.education.create")}
         size="lg"
       >
@@ -163,14 +182,16 @@ export default function AdminEducationPage() {
               </Field>
             </div>
 
-            <Field label={`${t("admin.education.title")} (${LANG_TABS.find((l) => l.code === langTab)?.label})`} required>
+            <Field htmlFor="education-title" label={`${t("admin.education.titleLabel")} (${LANG_TABS.find((l) => l.code === langTab)?.label})`} required>
               <Input
+                id="education-title" maxLength={200}
                 value={editing.title[langTab]}
                 onChange={(e) => setEditing({ ...editing, title: { ...editing.title, [langTab]: e.target.value } })}
               />
             </Field>
-            <Field label={`${t("admin.education.body")} (${LANG_TABS.find((l) => l.code === langTab)?.label})`} required>
+            <Field htmlFor="education-body" label={`${t("admin.education.body")} (${LANG_TABS.find((l) => l.code === langTab)?.label})`} required>
               <Textarea
+                id="education-body" maxLength={12000}
                 rows={6}
                 value={editing.body[langTab]}
                 onChange={(e) => setEditing({ ...editing, body: { ...editing.body, [langTab]: e.target.value } })}
@@ -184,6 +205,16 @@ export default function AdminEducationPage() {
               </Select>
             </Field>
 
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium">{t("education.sources")}</h3>
+              {editing.sources.map((source,index)=><div key={index} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field htmlFor={"source-title-"+index} label={t("education.sourceTitle")}><Input id={"source-title-"+index} value={source.title} onChange={e=>setEditing({...editing,sources:editing.sources.map((s,i)=>i===index?{...s,title:e.target.value}:s)})} /></Field>
+                <Field htmlFor={"source-url-"+index} label={t("education.sourceUrl")}><Input id={"source-url-"+index} type="url" value={source.url} onChange={e=>setEditing({...editing,sources:editing.sources.map((s,i)=>i===index?{...s,url:e.target.value}:s)})} /></Field>
+                <Button size="sm" variant="ghost" onClick={()=>setEditing({...editing,sources:editing.sources.filter((_,i)=>i!==index)})}>{t("common.remove",{defaultValue:"Remove"})}</Button>
+              </div>)}
+              <Button variant="outline" disabled={editing.sources.length>=10} onClick={()=>setEditing({...editing,sources:[...editing.sources,{title:"",url:""}]})}>+ {t("education.sources")}</Button>
+            </div>
+            {saveError && <p role="alert" className="text-sm text-red-700">{saveError}</p>}
             <Button onClick={save} loading={create.isPending || update.isPending}>
               {t("common.save")}
             </Button>

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { UserRole, Language } from "./types";
 import {
+  EDUCATIONAL_CATEGORIES,
   RECOMMENDATION_CATEGORIES,
   RECOMMENDATION_PRIORITIES,
   DIET_MEAL_PREFERENCES,
@@ -207,18 +208,12 @@ export const reportSchema = z.object({
 });
 
 export const educationalContentSchema = z.object({
-  title: z.object({
-    en: z.string().min(1),
-    hi: z.string().min(1),
-    kn: z.string().min(1),
-  }),
-  body: z.object({
-    en: z.string().min(1),
-    hi: z.string().min(1),
-    kn: z.string().min(1),
-  }),
-  category: z.string().min(1),
-  tags: z.array(z.string()).optional(),
+  title: z.object({ en: z.string().trim().min(1).max(200), hi: z.string().trim().min(1).max(200), kn: z.string().trim().min(1).max(200) }),
+  body: z.object({ en: z.string().trim().min(1).max(12000), hi: z.string().trim().min(1).max(12000), kn: z.string().trim().min(1).max(12000) }),
+  category: z.enum(EDUCATIONAL_CATEGORIES),
+  tags: z.array(z.string().trim().min(1).max(50)).max(20).optional(),
+  isActive: z.boolean().optional(),
+  sources: z.array(z.object({ title: z.string().trim().min(1).max(200), url: z.string().url().refine(value => value.startsWith('https://'), 'Use an HTTPS source link') })).max(10).optional(),
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;

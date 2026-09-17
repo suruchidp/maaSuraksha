@@ -671,7 +671,39 @@
       "baby_care": "Baby Care",
       "warning_signs": "Warning Signs"
     },
-    "disclaimer": "For educational purposes only. Not a substitute for medical advice."
+    "disclaimer": "For educational purposes only. Not a substitute for medical advice.",
+    "save": "Save",
+    "unsave": "Remove saved",
+    "markRead": "Mark as read",
+    "markUnread": "Mark as unread",
+    "read": "Read",
+    "readResource": "Read resource",
+    "search": "Search resources",
+    "refresh": "Refresh",
+    "libraryViews": "Resource library views",
+    "views": {
+      "all": "All resources",
+      "for_you": "For you",
+      "saved": "Saved"
+    },
+    "personalization": "Selected from your recorded pregnancy stage and completed screening results. Without those records, general resources are shown.",
+    "relevance": {
+      "stage": "Relevant to your pregnancy stage",
+      "risk": "Useful for screening follow-up",
+      "general": "General pregnancy information"
+    },
+    "noResults": "No resources found",
+    "noResultsDescription": "Try another topic or search term.",
+    "noSaved": "Save a resource to find it here later.",
+    "count": "{{count}} resources",
+    "sources": "Sources and further reading",
+    "pagination": "Resource pages",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {{page}} of {{total}}",
+    "contentRequired": "Add a title and body in all three languages.",
+    "sourceTitle": "Source title",
+    "sourceUrl": "HTTPS source URL"
   },
   "chatbot": {
     "title": "AI Assistant",
@@ -817,7 +849,7 @@
       "saved": "Content saved",
       "category": "Category",
       "tags": "Tags",
-      "title": "Title",
+      "titleLabel": "Title",
       "body": "Body",
       "isActive": "Published"
     },

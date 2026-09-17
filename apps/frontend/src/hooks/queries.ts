@@ -415,8 +415,11 @@ export function useUpdateAppointmentStatus() {
 
 /* ---- Education ---- */
 export function useEducation(params?: Record<string, unknown>) {
+  const userId = useAuthStore(s=>s.user?.id);
   return useQuery({
-    queryKey: qk.education(params),
+    enabled: !!userId,
+    staleTime: 0,
+    queryKey: [...qk.education(params), userId],
     queryFn: () => listEducation(params),
   });
 }
@@ -539,4 +542,9 @@ export function useUpdateEducation() {
 export function useReadAlert() {
  const qc = useQueryClient();
  return useMutation({ mutationFn: (id: string) => httpPatch('/alerts/' + id + '/read'), onSuccess: () => { void qc.invalidateQueries({ queryKey: ['alerts'] }); } });
+}
+
+export function useEducationProgress() {
+ const qc = useQueryClient();
+ return useMutation({mutationFn:({id,...progress}:{id:string;isSaved?:boolean;isRead?:boolean})=>httpPatch<{isSaved:boolean;readAt?:string}>('/education/'+id+'/progress',progress),onSuccess:()=>{void qc.invalidateQueries({queryKey:['education']});}});
 }

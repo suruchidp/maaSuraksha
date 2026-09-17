@@ -7,7 +7,9 @@ export interface IEducationalContentDocument extends Document {
   category: string;
   tags: string[];
   isActive: boolean;
-  createdBy: mongoose.Types.ObjectId;
+  createdBy?: mongoose.Types.ObjectId;
+  slug?: string;
+  sources: { title: string; url: string }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,11 +35,13 @@ const educationalContentSchema = new Schema<IEducationalContentDocument>(
       enum: EDUCATIONAL_CATEGORIES,
     },
     tags: [{ type: String }],
+    slug: String,
+    sources: [{ title: String, url: String, _id: false }],
     isActive: { type: Boolean, default: true },
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false,
     },
   },
   { timestamps: true }
@@ -45,6 +49,7 @@ const educationalContentSchema = new Schema<IEducationalContentDocument>(
 
 educationalContentSchema.index({ category: 1, isActive: 1 });
 educationalContentSchema.index({ tags: 1 });
+educationalContentSchema.index({ slug: 1 }, { unique: true, partialFilterExpression: { slug: { $type: "string" } } });
 educationalContentSchema.index({ "title.en": 1, "title.hi": 1, "title.kn": 1 });
 
 export const EducationalContent = mongoose.model<IEducationalContentDocument>(

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, beforeEach } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from "vitest";
 import { api, connectTestDb, cleanDb } from "./helpers";
 
 async function patientToken(email: string) {
@@ -22,7 +22,10 @@ describe("ML honesty policy (pending state, no fabricated scores)", () => {
     await connectTestDb();
   });
 
+  afterEach(() => vi.restoreAllMocks());
   beforeEach(async () => {
+    // These checks explicitly exercise unavailable-model behavior, independent of a live ML service.
+    vi.spyOn(globalThis, "fetch").mockImplementation(async () => new Response(JSON.stringify({model_status:"MODEL_UNAVAILABLE"}), {status:200,headers:{"Content-Type":"application/json"}}));
     await cleanDb();
     const acc = await patientToken("ml@honest.com");
     tok = acc.token;
