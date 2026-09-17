@@ -10,6 +10,8 @@ export type {
   PPDAssessment,
   Recommendation,
   DietPlan,
+  DietGuidancePreferences,
+  DietGuidance,
   Alert,
   Referral,
   Appointment,
@@ -22,7 +24,8 @@ export type {
 
 export { isFutureCalendarDate } from "./validations";
 
-export { API_PREFIX, PAGINATION_DEFAULTS, RISK_FACTORS, COMMON_SYMPTOMS, EDUCATIONAL_CATEGORIES } from "./constants";
+export { API_PREFIX, PAGINATION_DEFAULTS, RISK_FACTORS, COMMON_SYMPTOMS, EDUCATIONAL_CATEGORIES, RECOMMENDATION_CATEGORIES, RECOMMENDATION_PRIORITIES, DIET_MEAL_PREFERENCES, DIET_REGIONS, DIET_GUIDANCE_INTENTS } from "./constants";
+export type { RecommendationCategory, RecommendationPriority, DietMealPreference, DietRegion, DietGuidanceIntent } from "./constants";
 
 export {
   loginSchema,
@@ -40,6 +43,7 @@ export {
   ppdAssessmentSchema,
   recommendationSchema,
   dietPlanSchema,
+  dietGuidancePreferencesSchema,
   alertSchema,
   reportSchema,
 } from "./validations";
@@ -60,6 +64,7 @@ export type {
   PPDAssessmentInput,
   RecommendationInput,
   DietPlanInput,
+  DietGuidancePreferencesInput,
   AlertInput,
   ReportInput,
 } from "./validations";

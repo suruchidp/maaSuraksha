@@ -2,24 +2,23 @@ import { isValidObjectId } from "mongoose";
 import { Recommendation } from "../models/Recommendation";
 import { ApiError } from "../utils/ApiError";
 import { getAccessiblePatientIds } from "./accessService";
+import { generateAndPersistForUser } from "./recommendationEngine";
 import { AuthUser } from "../middleware/auth";
+import {
+  RECOMMENDATION_CATEGORIES,
+  RECOMMENDATION_PRIORITIES,
+  RecommendationCategory,
+  RecommendationPriority,
+} from "@maasuraksha/shared";
 
-const CATEGORIES = new Set([
-  "nutrition",
-  "exercise",
-  "rest",
-  "medical",
-  "mental_health",
-  "general",
-  "warning",
-]);
-const PRIORITIES = new Set(["low", "medium", "high"]);
+const CATEGORIES = new Set<string>(RECOMMENDATION_CATEGORIES);
+const PRIORITIES = new Set<string>(RECOMMENDATION_PRIORITIES);
 
 export interface RecommendationInput {
-  category: string;
+  category: RecommendationCategory;
   title: string;
   content: string;
-  priority: string;
+  priority: RecommendationPriority;
   source?: string;
 }
 
@@ -46,6 +45,7 @@ export async function createRecommendation(
     priority: input.priority,
     source: input.source,
     isPersonalized: true,
+    sourceType: "CARE_TEAM",
   });
 
   return toDto(rec);
@@ -60,6 +60,19 @@ export async function listRecommendations(
 ) {
   const allowed = await getAccessiblePatientIds(actor);
   if (targetUserId) assertAllowed(actor, targetUserId, allowed);
+
+  // Best-effort engine backfill: regenerate recommendations for the single
+  // patient being viewed (patient self-view, or a caregiver looking at one
+  // patient). Never run for broad caregiver/admin list views, and never let a
+  // generation failure break the listing.
+  const backfillUser = targetUserId ?? (actor.role === "PATIENT" ? actor.userId : undefined);
+  if (backfillUser) {
+    try {
+      await generateAndPersistForUser(backfillUser);
+    } catch {
+      // content generation must never break the listing
+    }
+  }
 
   const filter: Record<string, unknown> = targetUserId
     ? { user: targetUserId }
@@ -139,6 +152,13 @@ function toDto(rec: InstanceType<typeof Recommendation>) {
     isPersonalized: rec.isPersonalized,
     source: rec.source,
     isRead: rec.isRead,
+    sourceType: rec.sourceType ?? "CARE_TEAM",
+    titleLocalized: rec.titleLocalized ?? undefined,
+    contentLocalized: rec.contentLocalized ?? undefined,
+    reason: rec.reason,
+    reasonLocalized: rec.reasonLocalized ?? undefined,
+    references: rec.references ?? [],
+    templateKey: rec.templateKey,
     createdAt: rec.createdAt,
     updatedAt: rec.updatedAt,
   };

@@ -1,5 +1,11 @@
 import { z } from "zod";
 import { UserRole, Language } from "./types";
+import {
+  RECOMMENDATION_CATEGORIES,
+  RECOMMENDATION_PRIORITIES,
+  DIET_MEAL_PREFERENCES,
+  DIET_REGIONS,
+} from "./constants";
 
 /** Returns true when a YYYY-MM-DD (or ISO) date string falls after the current
     local calendar date. Non-date strings and invalid calendar dates return
@@ -158,10 +164,10 @@ export const ppdAssessmentSchema = z.object({
 });
 
 export const recommendationSchema = z.object({
-  category: z.string().min(1),
+  category: z.enum(RECOMMENDATION_CATEGORIES),
   title: z.string().min(1).max(200),
   content: z.string().min(1).max(2000),
-  priority: z.enum(["low", "medium", "high"]).default("medium"),
+  priority: z.enum(RECOMMENDATION_PRIORITIES).default("medium"),
   source: z.string().max(200).optional(),
 });
 
@@ -178,6 +184,11 @@ export const dietPlanSchema = z.object({
     )
     .min(1, "At least one meal is required"),
   nutritionalNotes: z.string().min(1).max(2000),
+});
+
+export const dietGuidancePreferencesSchema = z.object({
+  mealPreference: z.enum(DIET_MEAL_PREFERENCES),
+  region: z.enum(DIET_REGIONS).optional(),
 });
 
 export const alertSchema = z.object({
@@ -224,5 +235,6 @@ export type GDMAssessmentInput = z.infer<typeof gdmAssessmentSchema>;
 export type PPDAssessmentInput = z.infer<typeof ppdAssessmentSchema>;
 export type RecommendationInput = z.infer<typeof recommendationSchema>;
 export type DietPlanInput = z.infer<typeof dietPlanSchema>;
+export type DietGuidancePreferencesInput = z.infer<typeof dietGuidancePreferencesSchema>;
 export type AlertInput = z.infer<typeof alertSchema>;
 export type ReportInput = z.infer<typeof reportSchema>;

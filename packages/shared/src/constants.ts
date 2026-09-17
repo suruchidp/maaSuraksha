@@ -76,5 +76,52 @@ export const EDUCATIONAL_CATEGORIES = [
   "warning_signs",
 ] as const;
 
+export const RECOMMENDATION_CATEGORIES = [
+  "nutrition",
+  "exercise",
+  "rest",
+  "medical",
+  "mental_health",
+  "general",
+  "warning",
+] as const;
+
+export type RecommendationCategory = (typeof RECOMMENDATION_CATEGORIES)[number];
+
+export const RECOMMENDATION_PRIORITIES = ["low", "medium", "high"] as const;
+
+export type RecommendationPriority = (typeof RECOMMENDATION_PRIORITIES)[number];
+
+export const DIET_MEAL_PREFERENCES = [
+  "vegetarian",
+  "eggitarian",
+  "non_vegetarian",
+] as const;
+
+export type DietMealPreference = (typeof DIET_MEAL_PREFERENCES)[number];
+
+export const DIET_REGIONS = [
+  "north",
+  "south",
+  "east",
+  "west",
+  "other",
+] as const;
+
+export type DietRegion = (typeof DIET_REGIONS)[number];
+
+/** Intents emitted by the diet guidance engine (one persisted record per intent). */
+export const DIET_GUIDANCE_INTENTS = [
+  "stage",
+  "stage-missing",
+  "high-risk",
+  "gdm",
+  "metrics",
+  "symptom",
+  "meals",
+] as const;
+
+export type DietGuidanceIntent = (typeof DIET_GUIDANCE_INTENTS)[number];
+
 export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 export const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;

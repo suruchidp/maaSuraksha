@@ -499,7 +499,7 @@
     "title": "Recommendations",
     "subtitle": "Personalized care suggestions from your care team and the system.",
     "none": "No recommendations yet",
-    "noneDescription": "Recommendations will appear here as your care continues.",
+    "noneDescription": "System guidance appears after a screening or reading is completed. Your care team may also add recommendations for you.",
     "titleLabel": "Title",
     "categoryLabel": "Category",
     "content": "Content",
@@ -507,11 +507,16 @@
       "nutrition": "Nutrition",
       "mental_health": "Mental Health",
       "exercise": "Exercise",
-      "medication": "Medication",
-      "care": "Care",
+      "rest": "Rest",
+      "medical": "Medical",
       "general": "General",
-      "antenatal": "Antenatal"
+      "warning": "Warning"
     },
+    "sourceType": {
+      "SYSTEM": "System",
+      "CARE_TEAM": "Care team"
+    },
+    "why": "Why this is shown",
     "personalized": "Personalized",
     "unread": "New",
     "markRead": "Mark as read",
@@ -522,10 +527,34 @@
   },
   "diet": {
     "title": "Diet Guidance",
-    "subtitle": "Nutritious meal plans tailored to each trimester.",
+    "subtitle": "Indian pregnancy nutrition guidance tailored to your stage and preferences.",
     "none": "No diet plans yet",
     "noneDescription": "Your care team may share meal plans with you.",
     "nutritionalNotes": "Nutritional notes",
+    "preferencesTitle": "Your food preferences",
+    "preferencesDescription": "Set your meal preference and region so the suggested meal ideas are closer to what you eat. Preferences are used to personalise the generated guidance only.",
+    "mealPreference": "Meal preference",
+    "regionOptional": "Region (optional)",
+    "save": "Save preferences",
+    "saving": "Saving...",
+    "saved": "Preferences saved",
+    "generated": "Auto-generated",
+    "why": "Why am I seeing this",
+    "sources": "Sources",
+    "careTeamPlans": "Plans from your care team",
+    "careTeamPlansDescription": "Personalised meal plans shared by your care team.",
+    "preferenceLabel": {
+      "vegetarian": "Vegetarian",
+      "eggitarian": "Vegetarian + eggs",
+      "non_vegetarian": "Includes chicken / fish"
+    },
+    "regionLabel": {
+      "north": "North India",
+      "south": "South India",
+      "east": "East India",
+      "west": "West India",
+      "other": "Other / pan-India"
+    },
     "category": {
       "energy": "Energy foods",
       "protein": "Protein rich",

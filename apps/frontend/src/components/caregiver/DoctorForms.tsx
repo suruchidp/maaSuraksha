@@ -73,8 +73,9 @@ export function DoctorRecommendationForm({ patientId }: { patientId: string }) {
               <option value="nutrition">{t("recommendations.category.nutrition", { defaultValue: "nutrition" })}</option>
               <option value="mental_health">{t("recommendations.category.mental_health", { defaultValue: "mental_health" })}</option>
               <option value="exercise">{t("recommendations.category.exercise", { defaultValue: "exercise" })}</option>
-              <option value="medication">{t("recommendations.category.medication", { defaultValue: "medication" })}</option>
-              <option value="care">{t("recommendations.category.care", { defaultValue: "care" })}</option>
+              <option value="rest">{t("recommendations.category.rest", { defaultValue: "rest" })}</option>
+              <option value="medical">{t("recommendations.category.medical", { defaultValue: "medical" })}</option>
+              <option value="warning">{t("recommendations.category.warning", { defaultValue: "warning" })}</option>
             </Select>
           </Field>
           <Field label={t("recommendations.priority")} htmlFor="rec-priority">

@@ -10,6 +10,8 @@ import {
   AlertStatus,
   ReferralStatus,
   AppointmentStatus,
+  DietMealPreference,
+  DietRegion,
 } from "@maasuraksha/shared";
 
 /* Wire-format DTOs. The backend returns `id` (not `_id`) and ISO date
@@ -163,6 +165,12 @@ export interface MoodEntryDTO {
   message?: string;
 }
 
+export interface RecommendationSourceReference {
+  assessmentId: string;
+  assessmentType: "maternal" | "gdm" | "ppd";
+  modelVersion?: string;
+}
+
 export interface RecommendationDTO {
   id: string;
   user: string;
@@ -173,6 +181,13 @@ export interface RecommendationDTO {
   isPersonalized: boolean;
   source?: string;
   isRead: boolean;
+  sourceType?: "SYSTEM" | "CARE_TEAM";
+  titleLocalized?: Partial<Record<Language, string>>;
+  contentLocalized?: Partial<Record<Language, string>>;
+  reason?: string;
+  reasonLocalized?: Partial<Record<Language, string>>;
+  references?: RecommendationSourceReference[];
+  templateKey?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -192,6 +207,45 @@ export interface DietPlanDTO {
   nutritionalNotes: string;
   disclaimer: string;
   createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DietGuidanceSectionDTO {
+  key: string;
+  heading: Partial<Record<Language, string>>;
+  body?: Partial<Record<Language, string>>;
+  bullets?: Partial<Record<Language, string>>[];
+}
+
+export interface DietGuidanceDTO {
+  id: string;
+  user: string;
+  sourceType: "SYSTEM";
+  templateKey: string;
+  dedupeKey: string;
+  intent: string;
+  contentVersion: string;
+  priority: "low" | "medium" | "high";
+  title: string;
+  titleLocalized?: Partial<Record<Language, string>>;
+  sections: DietGuidanceSectionDTO[];
+  rationale?: string;
+  rationaleLocalized?: Partial<Record<Language, string>>;
+  disclaimer: string;
+  disclaimerLocalized?: Partial<Record<Language, string>>;
+  attribution?: { id: string; title: string; url: string }[];
+  references?: { assessmentId: string; assessmentType: string; modelVersion?: string }[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DietGuidancePreferencesDTO {
+  id: string;
+  user: string;
+  mealPreference: DietMealPreference;
+  region?: DietRegion;
+  updatedBy?: string;
   createdAt: string;
   updatedAt: string;
 }

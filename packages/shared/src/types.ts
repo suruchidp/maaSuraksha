@@ -1,3 +1,9 @@
+import type {
+  DietMealPreference,
+  DietRegion,
+  DietGuidanceIntent,
+} from "./constants";
+
 export enum UserRole {
   PATIENT = "PATIENT",
   ASHA = "ASHA",
@@ -211,6 +217,17 @@ export interface Recommendation {
   isPersonalized: boolean;
   source?: string;
   isRead: boolean;
+  sourceType?: "SYSTEM" | "CARE_TEAM";
+  titleLocalized?: Record<Language, string>;
+  contentLocalized?: Record<Language, string>;
+  reason?: string;
+  reasonLocalized?: Record<Language, string>;
+  references?: {
+    assessmentId: string;
+    assessmentType: "maternal" | "gdm" | "ppd";
+    modelVersion?: string;
+  }[];
+  templateKey?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -228,6 +245,57 @@ export interface DietPlan {
   nutritionalNotes: string;
   disclaimer: string;
   createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DietGuidancePreferences {
+  _id: string;
+  user: string;
+  mealPreference: DietMealPreference;
+  region?: DietRegion;
+  updatedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DietGuidanceReference {
+  assessmentId: string;
+  assessmentType: "maternal" | "gdm";
+  modelVersion?: string;
+}
+
+export interface DietGuidanceAttribution {
+  id: string;
+  title: string;
+  url: string;
+}
+
+export interface DietGuidanceSection {
+  key: string;
+  heading: Record<Language, string>;
+  body?: Record<Language, string>;
+  bullets?: Record<Language, string>[];
+}
+
+export interface DietGuidance {
+  _id: string;
+  user: string;
+  sourceType: "SYSTEM";
+  templateKey: string;
+  dedupeKey: string;
+  intent: DietGuidanceIntent;
+  contentVersion: string;
+  priority: "low" | "medium" | "high";
+  title: string;
+  titleLocalized: Record<Language, string>;
+  sections: DietGuidanceSection[];
+  rationale: string;
+  rationaleLocalized: Record<Language, string>;
+  disclaimer: string;
+  disclaimerLocalized: Record<Language, string>;
+  attribution: DietGuidanceAttribution[];
+  references?: DietGuidanceReference[];
   createdAt: string;
   updatedAt: string;
 }

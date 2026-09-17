@@ -60,18 +60,35 @@ function RecommendationCard({
   onMarkRead: (id: string, read: boolean) => void;
 }) {
   const { t } = useTranslation();
+  const isHigh = rec.priority === "high";
+  const title = rec.titleLocalized?.[lang] ?? rec.title;
+  const content = rec.contentLocalized?.[lang] ?? rec.content;
+  const reason = rec.reasonLocalized?.[lang] ?? rec.reason;
+  const sourceType = rec.sourceType ?? "CARE_TEAM";
   return (
-    <Card>
+    <Card className={isHigh ? "ring-2 ring-red-200 border-red-200" : undefined}>
       <div className="flex flex-wrap items-center gap-2 mb-1">
         <PriorityBadge priority={rec.priority} />
         <span className="text-xs text-gray-400">
           {formatDate(rec.createdAt, lang)} · {t(`recommendations.category.${rec.category}`, { defaultValue: rec.category })}
         </span>
+        <span
+          className={`text-xs px-2 py-0.5 rounded ${
+            sourceType === "SYSTEM" ? "bg-indigo-50 text-indigo-700" : "bg-gray-100 text-gray-600"
+          }`}
+        >
+          {t(`recommendations.sourceType.${sourceType}`, { defaultValue: sourceType })}
+        </span>
         {rec.isPersonalized && <span className="text-xs bg-accent-50 text-accent-700 px-2 py-0.5 rounded">{t("recommendations.personalized")}</span>}
         {!rec.isRead && <span className="text-xs bg-primary-50 text-primary-700 px-2 py-0.5 rounded">{t("recommendations.unread")}</span>}
       </div>
-      <h3 className="font-semibold text-gray-900 text-sm">{rec.title}</h3>
-      <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">{rec.content}</p>
+      <h3 className={`${isHigh ? "text-red-900" : "text-gray-900"} font-semibold text-sm`}>{title}</h3>
+      <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">{content}</p>
+      {reason && (
+        <p className="text-xs text-gray-400 mt-2 italic">
+          {t("recommendations.why")}: {reason}
+        </p>
+      )}
       <div className="mt-3 flex items-center gap-3">
         {!rec.isRead && (
           <Button size="sm" variant="outline" onClick={() => onMarkRead(rec.id, true)}>

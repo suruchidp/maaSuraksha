@@ -11,6 +11,7 @@ import {
   predictMaternalRisk,
   predictPPD,
 } from "./mlClient";
+import { refreshRecommendationsForAssessment } from "./recommendationEngine";
 
 const UNAVAILABLE_MESSAGE =
   "Model inference is not available in this environment yet. " +
@@ -82,6 +83,18 @@ export async function createMaternalRiskAssessment(
       },
     }
   );
+
+  const recommendationTitles = await refreshRecommendationsForAssessment(
+    userId,
+    String(assessment._id)
+  );
+  if (recommendationTitles.length > 0) {
+    await MaternalRiskAssessment.updateOne(
+      { _id: assessment._id },
+      { $set: { recommendations: recommendationTitles } }
+    );
+  }
+
   const updated = await MaternalRiskAssessment.findById(assessment._id);
   return {
     ...toMaternalRiskDto(updated ?? assessment),
@@ -187,6 +200,18 @@ export async function createGDMAssessment(
       },
     }
   );
+
+  const recommendationTitles = await refreshRecommendationsForAssessment(
+    userId,
+    String(assessment._id)
+  );
+  if (recommendationTitles.length > 0) {
+    await GDMAssessment.updateOne(
+      { _id: assessment._id },
+      { $set: { recommendations: recommendationTitles } }
+    );
+  }
+
   const updated = await GDMAssessment.findById(assessment._id);
   return {
     ...toGDMDto(updated ?? assessment),
@@ -253,6 +278,18 @@ export async function createPPDAssessment(
           },
         }
       );
+
+      const recommendationTitles = await refreshRecommendationsForAssessment(
+        userId,
+        String(assessment._id)
+      );
+      if (recommendationTitles.length > 0) {
+        await PPDAssessment.updateOne(
+          { _id: assessment._id },
+          { $set: { recommendations: recommendationTitles } }
+        );
+      }
+
       const updated = await PPDAssessment.findById(assessment._id);
       return {
         ...toPPDDto(updated ?? assessment),

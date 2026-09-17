@@ -22,6 +22,10 @@ import {
   markRecommendationRead,
 } from "@/services/recommendations";
 import { createDietPlan, listDietPlans } from "@/services/dietPlans";
+import {
+  getDietGuidance,
+  updateDietGuidancePreferences,
+} from "@/services/dietGuidance";
 import { createAlert, listAlerts, updateAlertStatus } from "@/services/alerts";
 import { createReferral, listReferrals, updateReferralStatus } from "@/services/referrals";
 import { createAppointment, listAppointments, updateAppointmentStatus } from "@/services/appointments";
@@ -51,6 +55,7 @@ export const qk = {
   mood: (userId?: string) => ["mood", userId ?? "self"],
   recommendations: (userId?: string) => ["recommendations", userId ?? "self"],
   diet: (userId?: string) => ["diet", userId ?? "self"],
+  dietGuidance: (userId?: string) => ["diet-guidance", userId ?? "self"],
   alerts: (userId?: string) => ["alerts", userId ?? "self"],
   referrals: ["referrals"],
   appointments: (patientId?: string) => ["appointments", patientId ?? "all"],
@@ -292,6 +297,27 @@ export function useCreateDietPlan() {
       createDietPlan(input as never, userId),
     onSuccess: (_, vars) => {
       void qc.invalidateQueries({ queryKey: qk.diet(vars.userId) });
+    },
+  });
+}
+
+/* ---- Diet guidance ---- */
+export function useDietGuidance(targetUserId?: string) {
+  const selfId = usePatientContext();
+  const userId = targetUserId ?? selfId ?? undefined;
+  return useQuery({
+    queryKey: qk.dietGuidance(userId),
+    queryFn: () => getDietGuidance(userId),
+  });
+}
+
+export function useUpdateDietGuidancePreferences() {
+  const qc = useQueryClient();
+  const selfId = usePatientContext();
+  return useMutation({
+    mutationFn: (input: unknown) => updateDietGuidancePreferences(input as never),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: qk.dietGuidance(selfId ?? undefined) });
     },
   });
 }

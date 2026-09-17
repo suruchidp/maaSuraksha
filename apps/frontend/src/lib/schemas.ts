@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { UserRole, Language, isFutureCalendarDate } from "@maasuraksha/shared";
+import { UserRole, Language, isFutureCalendarDate, RECOMMENDATION_CATEGORIES, RECOMMENDATION_PRIORITIES } from "@maasuraksha/shared";
 import type { TFunction } from "i18next";
 
 /* i18n-aware Zod schemas that mirror the shared-package constraints.
@@ -168,10 +168,10 @@ export function buildSchemas(t: SchemaMessages) {
     }),
 
     recommendation: z.object({
-      category: required(),
+      category: z.enum(RECOMMENDATION_CATEGORIES),
       title: required().max(200, t("validation.maxLength", { n: 200 })),
       content: required().max(2000, t("validation.maxLength", { n: 2000 })),
-      priority: z.enum(["low", "medium", "high"]).default("medium"),
+      priority: z.enum(RECOMMENDATION_PRIORITIES).default("medium"),
       source: z.string().max(200).optional(),
     }),
 
