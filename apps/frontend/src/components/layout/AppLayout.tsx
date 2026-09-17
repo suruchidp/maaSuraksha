@@ -26,6 +26,7 @@ import { Toaster } from "@/components/ui/Toaster";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { BrandMark } from "@/components/brand/BrandMark";
 import type { UserRole } from "@maasuraksha/shared";
 
 function navIcon(cls: string) {
@@ -107,28 +108,31 @@ export default function AppLayout() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 w-64 bg-cream-50/70 backdrop-blur-sm border-r border-rose-100/70 z-40 transform transition-transform duration-200 ${
+        className={`fixed inset-y-0 left-0 w-64 flex flex-col bg-cream-50/70 backdrop-blur-sm border-r border-rose-100/70 z-40 transform transition-transform duration-200 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
         aria-label={t("nav.sidebar")}
       >
-        <div className="flex items-center gap-2 px-5 py-4 border-b border-rose-100/70">
-          <Link to={homePath} className="flex items-center gap-2 font-bold text-gray-900">
-            <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-sm">
-              <span className="text-white font-bold text-sm">M</span>
-            </div>
-            <span className="font-display">{t("app.name")}</span>
-          </Link>
+        <div className="relative px-4 pt-4 pb-3 border-b border-rose-100/70">
           <button
             onClick={() => setSidebarOpen(false)}
-            className="ml-auto lg:hidden text-gray-400 hover:text-gray-600 p-1"
+            className="absolute right-3 top-3 lg:hidden text-gray-400 hover:text-gray-600 p-1"
             aria-label={t("common.close")}
           >
             <X className="w-5 h-5" />
           </button>
+          <Link to={homePath} className="flex flex-col items-center text-center">
+            <BrandMark className="w-12 h-12 shrink-0 mb-2" />
+            <span className="font-display text-2xl font-bold text-gray-900 leading-none tracking-tight">
+              {t("app.name")}
+            </span>
+            <span className="mt-1.5 text-[10.5px] font-semibold text-primary-600/90 leading-snug">
+              {t("app.taglineLine1")} · {t("app.taglineLine2")}
+            </span>
+          </Link>
         </div>
 
-        <nav className="h-[calc(100%-64px)] overflow-y-auto p-3 space-y-0.5">
+        <nav className="flex-1 min-h-0 overflow-y-auto p-3 space-y-0.5">
           {filteredNav.map((item) => (
             <NavLink
               key={item.to}
@@ -159,6 +163,12 @@ export default function AppLayout() {
           >
             <Menu className="w-6 h-6" />
           </button>
+          <Link to={homePath} className="flex items-center gap-2 lg:hidden">
+            <BrandMark className="w-8 h-8 shrink-0" />
+            <span className="font-display text-base font-semibold text-gray-900">
+              {t("app.name")}
+            </span>
+          </Link>
           <div className="flex-1 min-w-0" />
           <div className="flex items-center gap-3">
             <LanguageSwitcher />

@@ -1,7 +1,9 @@
 {
   "app": {
     "name": "MaaSuraksha",
-    "tagline": "Maternal Health Monitoring & Decision Support"
+    "tagline": "Safer Mothers · Healthier Tomorrows",
+    "taglineLine1": "Safer Mothers",
+    "taglineLine2": "Healthier Tomorrows"
   },
   "home": {
     "features": "Features",

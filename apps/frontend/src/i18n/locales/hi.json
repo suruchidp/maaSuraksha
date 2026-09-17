@@ -1,7 +1,9 @@
 {
   "app": {
     "name": "MaaSuraksha",
-    "tagline": "मातृ स्वास्थ्य निगरानी और निर्णय सहायता"
+    "tagline": "सुरक्षित माताएँ · स्वस्थ कल",
+    "taglineLine1": "सुरक्षित माताएँ",
+    "taglineLine2": "स्वस्थ कल"
   },
   "home": {
     "features": "विशेषताएँ",

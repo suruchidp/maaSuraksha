@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Heart, Shield, Brain, Activity } from "lucide-react";
 import { MaternalHero } from "@/components/illustrations/MaternalHero";
 import { BotanicalSprig } from "@/components/illustrations/Botanical";
+import { BrandMark } from "@/components/brand/BrandMark";
 
 export default function HomePage() {
   const { t } = useTranslation();
@@ -45,15 +46,17 @@ export default function HomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-10 items-center">
               <div className="text-center lg:text-left">
-                <p className="inline-flex items-center gap-2 rounded-full bg-white/80 border border-primary-100 px-4 py-1.5 text-sm font-medium text-primary-700 shadow-sm">
-                  <Heart className="w-4 h-4" />
-                  {t("app.tagline")}
-                </p>
-                <h1 className="mt-6 font-display text-4xl md:text-6xl font-semibold text-gray-900 text-balance">
+                <h1 className="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-4 font-display text-4xl md:text-6xl font-semibold text-gray-900 text-balance">
+                  <BrandMark className="w-12 h-12 sm:w-16 sm:h-16 shadow-soft shrink-0" />
                   {t("app.name")}
                 </h1>
-                <p className="mt-4 text-lg md:text-xl text-gray-600 max-w-2xl mx-auto lg:mx-0">
-                  {t("app.tagline")}
+                <p className="mt-5 text-lg md:text-xl text-gray-600 max-w-2xl mx-auto lg:mx-0">
+                  <span className="block font-semibold text-primary-700">
+                    {t("app.taglineLine1")}
+                  </span>
+                  <span className="block text-primary-600/90">
+                    {t("app.taglineLine2")}
+                  </span>
                 </p>
                 <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
                   <Link to="/register" className="btn-primary text-lg px-8 py-3 rounded-xl">

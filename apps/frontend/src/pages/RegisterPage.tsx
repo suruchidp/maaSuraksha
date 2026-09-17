@@ -15,6 +15,7 @@ import { Select } from "@/components/ui/Select";
 import { Field } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { BrandMark } from "@/components/brand/BrandMark";
 
 type RegisterForm = {
   name: string;
@@ -85,10 +86,18 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-maternal-sheen py-12 px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <Link to="/" className="font-display text-3xl font-semibold text-gray-900">
-            {t("app.name")}
+          <Link to="/" className="inline-flex flex-col items-center">
+            <BrandMark className="w-14 h-14 sm:w-16 sm:h-16 shadow-soft" />
+            <span className="font-display text-3xl font-semibold text-gray-900 mt-3">
+              {t("app.name")}
+            </span>
+            <span className="mt-1.5 text-sm font-medium text-primary-600/90 leading-snug">
+              {t("app.taglineLine1")}
+              <br />
+              {t("app.taglineLine2")}
+            </span>
           </Link>
-          <h1 className="font-display text-2xl font-semibold text-gray-900 mt-2">
+          <h1 className="font-display text-2xl font-semibold text-gray-900 mt-5">
             {t("auth.registerTitle")}
           </h1>
         </div>

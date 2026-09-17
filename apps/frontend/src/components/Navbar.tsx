@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/stores/authStore";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { BrandMark } from "@/components/brand/BrandMark";
 
 export default function Navbar() {
   const { t } = useTranslation();
@@ -12,16 +13,19 @@ export default function Navbar() {
   return (
     <nav className="bg-cream-50/80 backdrop-blur-sm border-b border-rose-100/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-sm">
-              <span className="text-white font-bold text-sm">M</span>
-            </div>
-            <span className="font-display text-xl font-semibold text-gray-900">
-              {t("app.name")}
+        <div className="flex flex-wrap justify-between items-center gap-x-4 gap-y-2 min-h-16 py-2">
+          <Link to="/" className="flex items-center space-x-2.5 min-w-0">
+            <BrandMark className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 shadow-sm" />
+            <span className="flex flex-col leading-tight min-w-0">
+              <span className="font-display text-base sm:text-xl font-semibold text-gray-900 whitespace-nowrap">
+                {t("app.name")}
+              </span>
+              <span className="hidden md:block text-[11px] font-medium text-primary-600/90 tracking-wide">
+                {t("app.tagline")}
+              </span>
             </span>
           </Link>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3 ml-auto shrink-0">
             <LanguageSwitcher />
             {isAuthenticated && user ? (
               <>
