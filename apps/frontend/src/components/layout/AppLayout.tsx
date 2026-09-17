@@ -1,3 +1,4 @@
+import { AlertNotificationBell } from "./AlertNotificationBell";
 import { useState, useEffect } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -171,6 +172,7 @@ export default function AppLayout() {
           </Link>
           <div className="flex-1 min-w-0" />
           <div className="flex items-center gap-3">
+            {user.role === "PATIENT" && <AlertNotificationBell userId={user.id} />}
             <LanguageSwitcher />
             <div className="hidden sm:flex items-center gap-2 pl-3 border-l border-rose-100/70 text-sm text-gray-600">
               <span className="w-7 h-7 rounded-full bg-gradient-to-br from-primary-200 to-lavender-300 text-primary-800 flex items-center justify-center text-xs font-semibold">

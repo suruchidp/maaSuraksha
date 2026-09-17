@@ -36,7 +36,8 @@ export default function AppointmentsPage() {
   const push = useToastStore((s) => s.push);
   const schemas = buildSchemas(t);
 
-  const appointments = useAppointments(user?.id, 100);
+  const [page, setPage] = useState(1);
+  const appointments = useAppointments(user?.id, 20, page);
   const create = useCreateAppointment();
   const updateStatus = useUpdateAppointmentStatus();
 
@@ -48,7 +49,7 @@ export default function AppointmentsPage() {
     reset,
     formState: { errors },
   } = useForm<AppointmentForm>({
-    resolver: zodResolver(schemas.appointment),
+    resolver: zodResolver(schemas.appointment.omit({ patient: true, doctor: true, asha: true })),
     defaultValues: {
       date: toLocalInputDate(new Date()),
       time: "10:00",
@@ -71,6 +72,7 @@ export default function AppointmentsPage() {
       {
         onSuccess: () => {
           push(t("appointments.booked"), "success");
+          setPage(1);
           reset({ date: toLocalInputDate(new Date()), time: "10:00", type: "antenatal" });
         },
         onError: (err) => push(getApiErrorMessage(err), "error"),
@@ -79,7 +81,7 @@ export default function AppointmentsPage() {
   };
 
   const confirmCancel = () => {
-    if (!cancelTarget) return;
+    if (!cancelTarget || updateStatus.isPending) return;
     updateStatus.mutate(
       { id: cancelTarget, status: "cancelled", reason: "cancelled_by_patient" },
       {
@@ -92,20 +94,20 @@ export default function AppointmentsPage() {
     );
   };
 
-  if (appointments.isLoading) return <Spinner />;
-
   const items = [...(appointments.data?.items ?? [])].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("appointments.title")} subtitle={t("appointments.subtitle")} />
+      <PageHeader title={t("appointments.title")} subtitle={t("appointments.subtitle")} actions={
+        <Button variant="outline" loading={appointments.isFetching} onClick={() => appointments.refetch()}>{t("alerts.refresh")}</Button>
+      } />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card title={t("appointments.bookTitle")}>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
             <Field label={t("appointments.date")} htmlFor="date" error={errors.date?.message} required>
-              <Input id="date" type="date" {...register("date")} />
+              <Input id="date" type="date" min={toLocalInputDate(new Date())} {...register("date")} />
             </Field>
             <Field label={t("appointments.time")} htmlFor="time" error={errors.time?.message} required>
               <Input id="time" type="time" {...register("time")} />
@@ -121,9 +123,10 @@ export default function AppointmentsPage() {
               </Select>
             </Field>
             <Field label={t("appointments.notes")} htmlFor="notes">
-              <Textarea id="notes" rows={3} {...register("notes")} />
+              <Textarea id="notes" rows={3} maxLength={500} {...register("notes")} />
             </Field>
-            <Button type="submit" loading={create.isPending}>
+            {create.isError && <p role="alert" className="text-sm text-red-700">{getApiErrorMessage(create.error)}</p>}
+            <Button type="submit" disabled={!user} loading={create.isPending}>
               {t("appointments.book")}
             </Button>
           </form>
@@ -131,7 +134,7 @@ export default function AppointmentsPage() {
 
         <div className="lg:col-span-2">
           <Card title={t("appointments.myAppointments")}>
-            {appointments.isError ? (
+            {appointments.isLoading ? <Spinner /> : appointments.isError ? (
               <ErrorState message={appointments.error?.message} onRetry={() => appointments.refetch()} />
             ) : items.length === 0 ? (
               <EmptyState title={t("appointments.none")} description={t("appointments.noneDescription")} />
@@ -142,14 +145,14 @@ export default function AppointmentsPage() {
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-gray-900">{t(`appointments.typeOptions.${appt.type}`, { defaultValue: appt.type })}</p>
                       <p className="text-xs text-gray-500">
-                        {formatDate(appt.date, lang)} Â· {appt.time}
+                        {formatDate(appt.date, lang)} · {appt.time}
                       </p>
                       {appt.notes && <p className="text-xs text-gray-400 mt-0.5">{appt.notes}</p>}
                     </div>
                     <div className="flex items-center gap-2">
                       <AppointmentStatusBadge status={appt.status} />
-                      {appt.status === "confirmed" ? (
-                        <Button size="sm" variant="danger" onClick={() => setCancelTarget(appt.id)}>
+                      {appt.status === "confirmed" || appt.status === "scheduled" ? (
+                        <Button size="sm" variant="danger" disabled={updateStatus.isPending} onClick={() => { updateStatus.reset(); setCancelTarget(appt.id); }}>
                           {t("appointments.cancel")}
                         </Button>
                       ) : null}
@@ -159,6 +162,14 @@ export default function AppointmentsPage() {
               </ul>
             )}
           </Card>
+          {!appointments.isLoading && !appointments.isError && (appointments.data?.totalPages ?? 0) > 1 && (
+            <nav className="flex justify-between items-center mt-4" aria-label={t("appointments.myAppointments")}>
+              <Button variant="outline" disabled={page === 1 || appointments.isFetching} onClick={() => setPage(page - 1)}>{t("alerts.previous")}</Button>
+              <span className="text-sm text-gray-500">{t("alerts.page", { page, total: appointments.data?.totalPages })}</span>
+              <Button variant="outline" disabled={page >= (appointments.data?.totalPages ?? 1) || appointments.isFetching} onClick={() => setPage(page + 1)}>{t("alerts.next")}</Button>
+            </nav>
+          )}
+          {updateStatus.isError && <p role="alert" className="mt-3 text-sm text-red-700">{getApiErrorMessage(updateStatus.error)}</p>}
         </div>
       </div>
 
@@ -168,7 +179,8 @@ export default function AppointmentsPage() {
         message={t("appointments.cancelConfirmMessage")}
         confirmLabel={t("appointments.cancel")}
         onConfirm={confirmCancel}
-        onCancel={() => setCancelTarget(null)}
+        onCancel={() => { if (!updateStatus.isPending) setCancelTarget(null); }}
+        loading={updateStatus.isPending}
         danger
       />
     </div>

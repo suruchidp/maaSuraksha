@@ -1,3 +1,4 @@
+import { refreshAlertsAfterWrite } from "./alertEngine";
 import { Types } from "mongoose";
 import { PregnancyProfile } from "../models/PregnancyProfile";
 import { ApiError } from "../utils/ApiError";
@@ -71,6 +72,7 @@ export async function createOrUpdatePregnancyProfile(
     profile = await PregnancyProfile.create(data);
   }
 
+  await refreshAlertsAfterWrite(userId);
   return toDto(profile);
 }
 

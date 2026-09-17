@@ -10,6 +10,7 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
   danger,
+  loading = false,
 }: {
   open: boolean;
   title: string;
@@ -18,16 +19,17 @@ export function ConfirmDialog({
   onConfirm: () => void;
   onCancel: () => void;
   danger?: boolean;
+  loading?: boolean;
 }) {
   const { t } = useTranslation();
   return (
     <Modal open={open} onClose={onCancel} title={title} size="sm">
       <p className="text-sm text-gray-600">{message}</p>
       <div className="flex justify-end gap-2 mt-6">
-        <Button variant="ghost" onClick={onCancel}>
+        <Button variant="ghost" disabled={loading} onClick={onCancel}>
           {t("common.cancel")}
         </Button>
-        <Button variant={danger ? "danger" : "primary"} onClick={onConfirm}>
+        <Button variant={danger ? "danger" : "primary"} loading={loading} onClick={onConfirm}>
           {confirmLabel ?? t("common.confirm")}
         </Button>
       </div>

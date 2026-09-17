@@ -145,7 +145,7 @@ export function buildSchemas(t: SchemaMessages) {
         .refine((val) => !isNaN(Date.parse(val)), t("validation.invalidDate")),
       time: z
         .string()
-        .regex(/^\d{2}:\d{2}$/, t("validation.invalidTime")),
+        .regex(/^([01]\d|2[0-3]):[0-5]\d$/, t("validation.invalidTime")),
       type: required(t("validation.appointmentTypeRequired")),
       notes: z
         .string()

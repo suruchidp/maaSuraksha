@@ -92,8 +92,8 @@ export const appointmentSchema = z.object({
   doctor: z.string().optional(),
   asha: z.string().optional(),
   date: z.string().refine((val) => !isNaN(Date.parse(val)), "Invalid date"),
-  time: z.string().regex(/^\d{2}:\d{2}$/, "Time must be in HH:MM format"),
-  type: z.string().min(1, "Appointment type is required"),
+  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Time must be in HH:MM format"),
+  type: z.string().trim().min(1, "Appointment type is required").max(100),
   notes: z.string().max(500).optional(),
 });
 
@@ -196,7 +196,8 @@ export const alertSchema = z.object({
   type: z.string().min(1),
   severity: z.enum(["info", "warning", "urgent", "critical"]),
   title: z.string().min(1).max(200),
-  message: z.string().min(1).max(2000),
+  message: z.string().trim().min(1).max(2000),
+  source: z.string().max(100).optional(),
 });
 
 export const reportSchema = z.object({

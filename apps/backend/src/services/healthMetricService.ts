@@ -1,3 +1,4 @@
+import { refreshAlertsAfterWrite } from "./alertEngine";
 import { HealthMetric } from "../models/HealthMetric";
 import { ApiError } from "../utils/ApiError";
 import { getAccessiblePatientIds } from "./accessService";
@@ -38,6 +39,7 @@ export async function createHealthMetric(
     recordedBy: actor.userId,
   });
 
+  await refreshAlertsAfterWrite(userId);
   return toDto(metric);
 }
 
@@ -112,6 +114,7 @@ export async function updateHealthMetric(
     }
   }
   await metric.save();
+  await refreshAlertsAfterWrite(metric.user.toString());
   return toDto(metric);
 }
 

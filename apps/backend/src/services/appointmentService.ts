@@ -1,9 +1,11 @@
+import { refreshAlertsAfterWrite } from "./alertEngine";
 import { isValidObjectId } from "mongoose";
 import { Appointment } from "../models/Appointment";
 import { ApiError } from "../utils/ApiError";
 import { getAccessiblePatientIds } from "./accessService";
 import { AuthUser } from "../middleware/auth";
 import { AppointmentStatus } from "@maasuraksha/shared";
+import { User } from "../models/User";
 
 export interface AppointmentInput {
   patient: string;
@@ -24,20 +26,37 @@ export async function createAppointment(actor: AuthUser, input: AppointmentInput
   if (actor.role === "PATIENT" && input.patient !== actor.userId) {
     throw ApiError.forbidden("You can only book appointments for yourself");
   }
-  if (actor.role === "ASHA" && !allowed.has(input.patient)) {
+  if (actor.role !== "ADMIN" && !allowed.has(input.patient)) {
     throw ApiError.forbidden("You do not have access to this patient's data");
+  }
+
+  const patient = await User.findOne({ _id: input.patient, role: "PATIENT", isActive: true });
+  if (!patient) throw ApiError.notFound("Patient not found");
+  const date = new Date(input.date);
+  const today = new Date();
+  const todayDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) < todayDate) {
+    throw ApiError.badRequest("Choose today or a future appointment date");
+  }
+  const doctor = actor.role === "PATIENT" ? patient.assignedDoctor?.toString() : input.doctor ?? patient.assignedDoctor?.toString();
+  const asha = actor.role === "PATIENT" ? patient.assignedASHA?.toString() : input.asha ?? (actor.role === "ASHA" ? actor.userId : patient.assignedASHA?.toString());
+  for (const [id, role] of [[doctor, "DOCTOR"], [asha, "ASHA"]] as const) {
+    if (id && !(await User.exists({ _id: id, role, isActive: true }))) {
+      throw ApiError.badRequest(`Assigned ${role.toLowerCase()} is unavailable`);
+    }
   }
 
   const appointment = await Appointment.create({
     patient: input.patient,
-    doctor: input.doctor,
-    asha: input.asha ?? (actor.role === "ASHA" ? actor.userId : undefined),
-    date: new Date(input.date),
+    doctor,
+    asha,
+    date,
     time: input.time,
     type: input.type,
     notes: input.notes,
   });
 
+  await refreshAlertsAfterWrite(input.patient);
   return toDto(appointment);
 }
 
@@ -132,11 +151,27 @@ export async function updateAppointmentStatus(
     throw ApiError.forbidden("You do not have access to this appointment");
   }
 
+  if (actor.role === "PATIENT" && status !== AppointmentStatus.CANCELLED) {
+    throw ApiError.forbidden("Patients can only cancel appointments");
+  }
+  if (appointment.status === status) return toDto(appointment);
+  const transitions: Record<string, AppointmentStatus[]> = {
+    scheduled: [AppointmentStatus.CONFIRMED, AppointmentStatus.CANCELLED, AppointmentStatus.MISSED],
+    confirmed: [AppointmentStatus.COMPLETED, AppointmentStatus.CANCELLED, AppointmentStatus.MISSED],
+  };
+  if (!transitions[appointment.status]?.includes(status)) {
+    throw ApiError.conflict("This appointment can no longer be changed");
+  }
+  if (cancelledReason !== undefined && (typeof cancelledReason !== "string" || cancelledReason.length > 500)) {
+    throw ApiError.badRequest("Cancellation reason must be under 500 characters");
+  }
+
   appointment.status = status;
   if (status === AppointmentStatus.CANCELLED && cancelledReason) {
     appointment.cancelledReason = cancelledReason;
   }
   await appointment.save();
+  await refreshAlertsAfterWrite(appointment.patient.toString());
   return toDto(appointment);
 }
 

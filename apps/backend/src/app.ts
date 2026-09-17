@@ -1,3 +1,5 @@
+import { startAlertWorker } from "./services/alertWorker";
+import { Alert } from "./models/Alert";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -82,11 +84,14 @@ app.use(errorHandler);
 async function startServer(): Promise<import("http").Server> {
   try {
     await connectDB();
+    await Alert.init();
     const server = app.listen(config.port, () => {
       console.log(
         `MaaSuraksha backend running on port ${config.port} in ${config.nodeEnv} mode`
       );
     });
+    const stopAlerts = startAlertWorker();
+    server.on("close", stopAlerts);
     return server;
   } catch (error) {
     console.error("Failed to start server:", error);

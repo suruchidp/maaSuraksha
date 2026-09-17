@@ -301,6 +301,7 @@ export interface DietGuidance {
 }
 
 export interface Alert {
+  readAt?: string;
   _id: string;
   user: string;
   type: string;

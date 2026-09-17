@@ -251,6 +251,7 @@ export interface DietGuidancePreferencesDTO {
 }
 
 export interface AlertDTO {
+  readAt?: string;
   id: string;
   user: string;
   type: string;

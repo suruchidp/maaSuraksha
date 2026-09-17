@@ -1,3 +1,5 @@
+import { User } from "../models/User";
+import { refreshPatientAlerts } from "./alertEngine";
 import { isValidObjectId } from "mongoose";
 import { Alert } from "../models/Alert";
 import { ApiError } from "../utils/ApiError";
@@ -37,6 +39,7 @@ export async function createAlert(actor: AuthUser, input: AlertInput) {
     }
   }
 
+  if (!(await User.exists({ _id: input.user, role: "PATIENT", isActive: true }))) throw ApiError.notFound("Patient not found");
   const alert = await Alert.create({
     user: input.user,
     type: input.type,
@@ -54,16 +57,25 @@ export async function listAlerts(
   targetUserId: string | undefined,
   page: number,
   limit: number,
-  status?: string
+  status?: string,
+  unread?: string
 ) {
   const allowed = await getAccessiblePatientIds(actor);
-  if (targetUserId) assertAllowed(actor, targetUserId, allowed);
+  if (targetUserId) { validateId(targetUserId); assertAllowed(actor, targetUserId, allowed); }
+  if (actor.role === "PATIENT") await refreshPatientAlerts(actor.userId);
 
   const filter: Record<string, unknown> = targetUserId
     ? { user: targetUserId }
-    : { user: { $in: Array.from(allowed) } };
-  if (status) filter.status = status;
+    : actor.role === "ADMIN" ? {} : { user: { $in: Array.from(allowed) } };
+  if (status) {
+    if (!Object.values(AlertStatus).includes(status as AlertStatus)) throw ApiError.badRequest("Invalid alert status");
+    filter.status = status;
+  }
 
+  if (unread !== undefined) {
+    if (!["true", "false"].includes(unread)) throw ApiError.badRequest("Invalid unread filter");
+    filter.readAt = { $exists: unread === "false" };
+  }
   const total = await Alert.countDocuments(filter);
   const items = await Alert.find(filter)
     .sort({ createdAt: -1 })
@@ -96,6 +108,10 @@ export async function updateAlertStatus(
   if (!alert) throw ApiError.notFound("Alert not found");
   assertAllowed(actor, alert.user.toString(), allowed);
 
+  if (actor.role === "PATIENT" && status === AlertStatus.RESOLVED) throw ApiError.forbidden("Your care team must resolve clinical alerts");
+  if (alert.status === AlertStatus.RESOLVED && status !== AlertStatus.RESOLVED) throw ApiError.conflict("Resolved alerts cannot be reopened");
+  if (status === AlertStatus.PENDING && alert.status !== AlertStatus.PENDING) throw ApiError.conflict("Acknowledged alerts cannot be reset");
+  if (alert.user.toString() === actor.userId) alert.readAt = alert.readAt ?? new Date();
   alert.status = status;
   if (status === AlertStatus.ACKNOWLEDGED && !alert.acknowledgedBy) {
     alert.acknowledgedBy = actor.userId as never;
@@ -132,7 +148,24 @@ function toDto(alert: InstanceType<typeof Alert>) {
     acknowledgedBy: alert.acknowledgedBy,
     acknowledgedAt: alert.acknowledgedAt,
     source: alert.source,
+    readAt: alert.readAt,
     createdAt: alert.createdAt,
     updatedAt: alert.updatedAt,
   };
+}
+export async function markAlertRead(actor: AuthUser, id: string) {
+  const existing = await getAlert(actor, id);
+  if (existing.user.toString() !== actor.userId) throw ApiError.forbidden("Only the recipient can mark an alert as read");
+  const alert = await Alert.findOneAndUpdate({ _id: id, readAt: { $exists: false } }, { $set: { readAt: new Date() } }, { new: true });
+  return alert ? toDto(alert) : getAlert(actor, id);
+}
+export async function alertSummary(actor: AuthUser) {
+  if (actor.role === "PATIENT") await refreshPatientAlerts(actor.userId);
+  const allowed = await getAccessiblePatientIds(actor);
+  const filter = actor.role === "ADMIN" ? {} : { user: { $in: Array.from(allowed) } };
+  const [unread, pending] = await Promise.all([
+    Alert.countDocuments({ ...filter, readAt: { $exists: false } }),
+    Alert.countDocuments({ ...filter, status: AlertStatus.PENDING }),
+  ]);
+  return { unread, pending };
 }

@@ -22,7 +22,7 @@ export const listController = asyncHandler(
     const { page, limit } = parsePagination(req.query);
     const userId = req.query.userId as string | undefined;
     const status = req.query.status as string | undefined;
-    const result = await listAlerts(req.user!, userId, page, limit, status);
+    const result = await listAlerts(req.user!, userId, page, limit, status, req.query.unread as string | undefined);
     sendSuccess(res, result.items, 200, buildPaginationMeta(page, limit, result.total));
   }
 );

@@ -11,6 +11,8 @@ export interface IAlertDocument extends Document {
   acknowledgedBy?: mongoose.Types.ObjectId;
   acknowledgedAt?: Date;
   source?: string;
+  readAt?: Date;
+  dedupeKey?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -52,6 +54,8 @@ const alertSchema = new Schema<IAlertDocument>(
     acknowledgedBy: { type: Schema.Types.ObjectId, ref: "User" },
     acknowledgedAt: { type: Date },
     source: { type: String, maxlength: 100 },
+    readAt: Date,
+    dedupeKey: String,
   },
   { timestamps: true }
 );
@@ -60,5 +64,6 @@ alertSchema.index({ user: 1, status: 1, createdAt: -1 });
 alertSchema.index({ user: 1, severity: 1 });
 alertSchema.index({ severity: 1, status: 1 });
 alertSchema.index({ type: 1 });
+alertSchema.index({ user: 1, dedupeKey: 1 }, { unique: true, partialFilterExpression: { dedupeKey: { $type: "string" } } });
 
 export const Alert = mongoose.model<IAlertDocument>("Alert", alertSchema);

@@ -1,3 +1,4 @@
+import { httpPatch } from "@/lib/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import { isNotFound } from "@/lib/api";
@@ -323,12 +324,13 @@ export function useUpdateDietGuidancePreferences() {
 }
 
 /* ---- Alerts ---- */
-export function useAlerts(targetUserId?: string, limit = 50) {
+export function useAlerts(targetUserId?: string, limit = 50, page = 1, status?: string) {
   const selfId = usePatientContext();
   const userId = targetUserId ?? selfId ?? undefined;
   return useQuery({
-    queryKey: qk.alerts(userId),
-    queryFn: () => listAlerts({ page: 1, limit, userId }),
+    queryKey: [...qk.alerts(userId), { limit, page, status }],
+    queryFn: () => listAlerts({ page, limit, userId, status: status === "unread" ? undefined : status, unread: status === "unread" ? true : undefined }),
+    refetchInterval: 30000,
   });
 }
 
@@ -383,10 +385,10 @@ export function useUpdateReferralStatus() {
 }
 
 /* ---- Appointments ---- */
-export function useAppointments(patientId?: string, limit = 50) {
+export function useAppointments(patientId?: string, limit = 50, page = 1) {
   return useQuery({
-    queryKey: qk.appointments(patientId),
-    queryFn: () => listAppointments({ page: 1, limit, patientId }),
+    queryKey: [...qk.appointments(patientId), { limit, page }],
+    queryFn: () => listAppointments({ page, limit, patientId }),
   });
 }
 
@@ -532,4 +534,9 @@ export function useUpdateEducation() {
       import("@/services/education").then((m) => m.updateEducationContent(id, patch as never)),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["education"] }),
   });
+}
+
+export function useReadAlert() {
+ const qc = useQueryClient();
+ return useMutation({ mutationFn: (id: string) => httpPatch('/alerts/' + id + '/read'), onSuccess: () => { void qc.invalidateQueries({ queryKey: ['alerts'] }); } });
 }

@@ -1,3 +1,4 @@
+import { refreshAlertsAfterWrite } from "./alertEngine";
 import { isValidObjectId } from "mongoose";
 import { RiskLevel, PPDSeverity } from "@maasuraksha/shared";
 import { MaternalRiskAssessment } from "../models/MaternalRiskAssessment";
@@ -84,6 +85,7 @@ export async function createMaternalRiskAssessment(
     }
   );
 
+  await refreshAlertsAfterWrite(userId);
   const recommendationTitles = await refreshRecommendationsForAssessment(
     userId,
     String(assessment._id)
@@ -201,6 +203,7 @@ export async function createGDMAssessment(
     }
   );
 
+  await refreshAlertsAfterWrite(userId);
   const recommendationTitles = await refreshRecommendationsForAssessment(
     userId,
     String(assessment._id)
@@ -279,7 +282,8 @@ export async function createPPDAssessment(
         }
       );
 
-      const recommendationTitles = await refreshRecommendationsForAssessment(
+      await refreshAlertsAfterWrite(userId);
+  const recommendationTitles = await refreshRecommendationsForAssessment(
         userId,
         String(assessment._id)
       );

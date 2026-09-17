@@ -174,7 +174,7 @@ export function ASHAlertForm({ patientId }: { patientId: string }) {
             <option value="critical">{t("status.severity.critical")}</option>
           </Select>
         </Field>
-        <Field label={t("alerts.title")} htmlFor="a-title" error={errors.title?.message} required>
+        <Field label={t("alerts.titleLabel")} htmlFor="a-title" error={errors.title?.message} required>
           <Input id="a-title" {...register("title")} />
         </Field>
         <Field label={t("alerts.message")} htmlFor="a-message" error={errors.message?.message} required>
