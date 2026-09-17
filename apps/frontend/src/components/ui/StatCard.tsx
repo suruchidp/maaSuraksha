@@ -11,19 +11,21 @@ export function StatCard({
   label: string;
   value: ReactNode;
   hint?: string;
-  color?: "primary" | "green" | "amber" | "red" | "blue";
+  color?: "primary" | "green" | "amber" | "red" | "blue" | "peach" | "blush";
 }) {
   const colorClass: Record<string, string> = {
-    primary: "bg-primary-50 text-primary-700",
-    green: "bg-accent-50 text-accent-700",
-    amber: "bg-amber-50 text-amber-700",
-    red: "bg-red-50 text-red-700",
-    blue: "bg-blue-50 text-blue-700",
+    primary: "bg-primary-100/80 text-primary-700",
+    blush: "bg-primary-100/80 text-primary-700",
+    green: "bg-accent-100/80 text-accent-700",
+    amber: "bg-amber-100/80 text-amber-700",
+    red: "bg-red-100/80 text-red-700",
+    blue: "bg-blue-100/80 text-blue-700",
+    peach: "bg-peach-100/80 text-peach-700",
   };
   return (
-    <div className="card flex items-start gap-4">
+    <div className="rounded-2xl bg-white border border-rose-100/70 shadow-card p-5 flex items-start gap-4">
       {icon && (
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClass[color]}`}>
+        <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${colorClass[color]}`}>
           {icon}
         </div>
       )}

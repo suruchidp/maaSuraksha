@@ -3,6 +3,17 @@
     "name": "MaaSuraksha",
     "tagline": "ಮಾತೃ ಆರೋಗ್ಯ ಮೇಲ್ವಿಚಾರಣೆ ಮತ್ತು ನಿರ್ಧಾರ ಬೆಂಬಲ"
   },
+  "home": {
+    "features": "ವೈಶಿಷ್ಟ್ಯಗಳು",
+    "featurePregnancy": "ಗರ್ಭಧಾರಣೆ ಟ್ರ್ಯಾಕಿಂಗ್",
+    "featurePregnancyDesc": "ವಾರದಿಂದ ವಾರ ನಿಮ್ಮ ಗರ್ಭಧಾರಣೆ ಪ್ರಯಾಣವನ್ನು ಅನುಸರಿಸಿ",
+    "featureMetrics": "ಆರೋಗ್ಯ ಮೇಲ್ವಿಚಾರಣೆ",
+    "featureMetricsDesc": "ಪ್ರಮುಖ ಆರೋಗ್ಯ ಸೂಚಕಗಳನ್ನು ಟ್ರ್ಯಾಕ್ ಮಾಡಿ",
+    "featureAssessments": "AI ಅಪಾಯ ಮೌಲ್ಯಮಾಪನ",
+    "featureAssessmentsDesc": "ಆರಂಭಿಕ, ವಿವರಿಸಬಹುದಾದ ಅಪಾಯ ಪತ್ತೆ",
+    "featureAlerts": "ಸಮಯೋಚಿತ ಎಚ್ಚರಿಕೆಗಳು",
+    "featureAlertsDesc": "ಮುಖ್ಯವಾದ ಆರೋಗ್ಯ ಕಾಳಜಿಗಳಿಗೆ ಎಚ್ಚರಿಕೆಗಳು"
+  },
   "nav": {
     "home": "ಮುಖಪುಟ",
     "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
@@ -168,6 +179,11 @@
     },
     "dashboard": {
       "subtitle": "ನಿಮ್ಮ ಆರೋಗ್ಯ ಮಾಹಿತಿ ಮತ್ತು ಆರೈಕೆ ಜ್ಞಾಪನೆಗಳು ಒಂದೇ ಸ್ಥಳದಲ್ಲಿ.",
+      "heroGreeting": "ನಮಸ್ಕಾರ, {{name}}",
+      "heroSubPregnancy": "ನೀವು ಮತ್ತು ನಿಮ್ಮ ಮಗು ಹೇಗಿದ್ದೀರಿ ಎಂಬುದು ಇಲ್ಲಿದೆ.",
+      "heroSubNoPregnancy": "ನಿಮ್ಮ ಪ್ರಯಾಣ ಆರಂಭಿಸಲು ಗರ್ಭಧಾರಣೆ ಪ್ರೊಫೈಲ್ ಸಿದ್ಧಪಡಿಸಿ.",
+      "yourWeek": "ನಿಮ್ಮ ವಾರ",
+      "dueDateOn": "ನಿರೀಕ್ಷಿತ ದಿನಾಂಕ {{date}}",
       "gestationalWeek": "ಗರ್ಭಧಾರಣಾ ವಾರ",
       "setUpPregnancy": "ಗರ್ಭಧಾರಣೆ ಪ್ರೊಫೈಲ್ ಸಿದ್ಧಪಡಿಸಿ",
       "dueDate": "ನಿರೀಕ್ಷಿತ ದಿನಾಂಕ {{date}}",
@@ -179,7 +195,18 @@
       "nextAppointment": "ಮುಂದಿನ ಭೇಟಿ",
       "bookAppointment": "ಭೇಟಿಯನ್ನು ಕಾಯ್ದಿರಿಸಿ",
       "recentAlerts": "ಇತ್ತೀಚಿನ ಎಚ್ಚರಿಕೆಗಳು",
-      "upcomingAppointments": "ಮುಂಬರುವ ಭೇಟಿಗಳು"
+      "upcomingAppointments": "ಮುಂಬರುವ ಭೇಟಿಗಳು",
+      "healthOverview": "ಆರೋಗ್ಯ ಅವಲೋಕನ",
+      "recentAssessments": "ಇತ್ತೀಚಿನ ಮೌಲ್ಯಮಾಪನಗಳು",
+      "recentAssessmentsEmpty": "ಇನ್ನೂ ಯಾವುದೇ ಮೌಲ್ಯಮಾಪನಗಳಿಲ್ಲ",
+      "recentAssessmentsEmptyDesc": "ಫಲಿತಾಂಶಗಳನ್ನು ನೋಡಲು ಮೌಲ್ಯಮಾಪನವನ್ನು ನಡೆಸಿರಿ.",
+      "viewAllAssessments": "ಎಲ್ಲಾ ಮೌಲ್ಯಮಾಪನಗಳನ್ನು ನೋಡಿ",
+      "quickMetrics": "ಪ್ರಮುಖ ಸೂಚಕಗಳು ಮತ್ತು ಪ್ರವೃತ್ತಿಗಳು",
+      "quickAssessments": "AI ಅಪಾಯ ಪರಿಶೀಲನೆ",
+      "quickAppointments": "ಭೇಟಿಗಳನ್ನು ಕಾಯ್ದಿರಿಸಿ ಮತ್ತು ನಿರ್ವಹಿಸಿ",
+      "quickRecommendations": "ವೈಯಕ್ತಿಕ ಆರೈಕೆ ಸಲಹೆ",
+      "quickDiet": "ತ್ರೈಮಾಸಿಕ ಊಟದ ಯೋಜನೆಗಳು",
+      "quickAlerts": "ಪ್ರಮುಖ ಆರೋಗ್ಯ ಸೂಚನೆಗಳು"
     }
   },
   "pregnancy": {

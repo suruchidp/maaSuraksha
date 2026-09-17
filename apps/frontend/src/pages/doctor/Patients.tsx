@@ -49,10 +49,10 @@ export default function DoctorPatientsPage() {
         </Card>
       ) : (
         <Card title={`${t("doctor.patients.list")} (${items.length})`}>
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-rose-100/60">
             {items.map((p) => (
               <li key={p.id}>
-                <Link to={`/doctor/patients/${p.id}`} className="py-3 flex items-center gap-3 hover:bg-gray-50 rounded-lg group">
+                <Link to={`/doctor/patients/${p.id}`} className="py-3 flex items-center gap-3 hover:bg-rose-50/60 rounded-lg group">
                   <div className="w-10 h-10 rounded-full bg-accent-50 text-accent-700 flex items-center justify-center font-semibold">
                     {p.name.charAt(0)}
                   </div>

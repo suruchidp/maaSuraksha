@@ -72,7 +72,7 @@ export default function ChatbotPage() {
     <div className="space-y-6">
       <PageHeader title={t("chatbot.title")} subtitle={t("chatbot.subtitle")} />
 
-      <div className="rounded-lg bg-primary-50 border border-primary-200 p-3 text-sm text-primary-800 flex items-start gap-2">
+      <div className="rounded-2xl bg-lavender-50/80 border border-lavender-200/80 p-3 text-sm text-lavender-900 flex items-start gap-2 shadow-sm">
         <Bot className="w-4 h-4 mt-0.5 shrink-0" />
         <div>
           <p>{t("chatbot.disclaimer")}</p>
@@ -82,7 +82,7 @@ export default function ChatbotPage() {
 
       <Card className="p-0 overflow-hidden">
         <div className="grid grid-cols-1 sm:grid-cols-[240px_1fr] h-[60vh]">
-          <div className="border-r border-gray-100 p-3 space-y-1 overflow-y-auto hidden sm:block">
+          <div className="border-r border-rose-100/70 bg-cream-50/40 p-3 space-y-1 overflow-y-auto hidden sm:block">
             {conversations.isLoading ? (
               <Spinner />
             ) : conversationsList.length === 0 ? (
@@ -92,8 +92,8 @@ export default function ChatbotPage() {
                 <button
                   key={c.id}
                   onClick={() => setActiveId(c.id)}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                    activeId === c.id ? "bg-primary-50 text-primary-700" : "text-gray-600 hover:bg-gray-50"
+                  className={`w-full text-left px-3 py-2 rounded-xl text-sm transition-colors ${
+                    activeId === c.id ? "bg-primary-100/70 text-primary-800 font-medium" : "text-gray-600 hover:bg-rose-50/60"
                   }`}
                 >
                   <p className="font-medium truncate">{c.title || t("chatbot.untitled")}</p>
@@ -106,7 +106,7 @@ export default function ChatbotPage() {
           </div>
 
           <div className="flex flex-col h-[60vh]">
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/50">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gradient-to-b from-cream-50/60 to-white">
               {!activeId ? (
                 <EmptyState title={t("chatbot.startPrompt")} description={t("chatbot.startDescription")} />
               ) : messages.isLoading ? (
@@ -166,8 +166,8 @@ function MessageBubble({ role, content }: { role: "user" | "assistant"; content:
           {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
         </div>
         <div
-          className={`rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap ${
-            isUser ? "bg-primary-600 text-white" : "bg-white border border-gray-100 text-gray-700"
+          className={`rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap shadow-sm ${
+            isUser ? "bg-primary-600 text-white" : "bg-white border border-rose-100/80 text-gray-700"
           }`}
         >
           {content}

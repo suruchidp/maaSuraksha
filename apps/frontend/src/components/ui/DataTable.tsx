@@ -54,9 +54,9 @@ export function DataTable<T extends { id: string }>({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100 bg-white">
+        <tbody className="divide-y divide-rose-100/60 bg-white">
           {rows.map((row, i) => (
-            <tr key={`${id}-${i}-${row.id}`} className="hover:bg-gray-50">
+            <tr key={`${id}-${i}-${row.id}`} className="hover:bg-rose-50/60">
               {columns.map((col) => (
                 <td key={`${id}-${col.key}`} className={`px-4 py-3 ${col.className ?? ""}`}>
                   {col.render ? col.render(row) : (row as Record<string, unknown>)[col.key] as ReactNode}

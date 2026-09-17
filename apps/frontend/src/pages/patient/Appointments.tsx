@@ -136,13 +136,13 @@ export default function AppointmentsPage() {
             ) : items.length === 0 ? (
               <EmptyState title={t("appointments.none")} description={t("appointments.noneDescription")} />
             ) : (
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-rose-100/60">
                 {items.map((appt) => (
                   <li key={appt.id} className="py-3 flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-gray-900">{t(`appointments.typeOptions.${appt.type}`, { defaultValue: appt.type })}</p>
                       <p className="text-xs text-gray-500">
-                        {formatDate(appt.date, lang)} · {appt.time}
+                        {formatDate(appt.date, lang)} Â· {appt.time}
                       </p>
                       {appt.notes && <p className="text-xs text-gray-400 mt-0.5">{appt.notes}</p>}
                     </div>

@@ -114,7 +114,7 @@ export function DoctorReferralActions({ patientId }: { patientId: string }) {
       {items.length === 0 ? (
         <p className="text-sm text-gray-500">{t("referrals.none")}</p>
       ) : (
-        <ul className="divide-y divide-gray-100">
+        <ul className="divide-y divide-rose-100/60">
           {items.map((ref) => (
             <li key={ref.id} className="py-3">
               <div className="flex flex-wrap items-center gap-2">

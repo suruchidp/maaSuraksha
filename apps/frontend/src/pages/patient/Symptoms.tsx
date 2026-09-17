@@ -92,7 +92,7 @@ export default function SymptomsPage() {
     <div className="space-y-6">
       <PageHeader title={t("symptoms.title")} subtitle={t("symptoms.subtitle")} />
 
-      <Card title={t("symptoms.reportTitle")}>
+      <Card title={t("symptoms.reportTitle")} tone="lavender">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
           <Field label={t("symptoms.chooseSymptoms")} error={errors.symptoms?.message} required>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -104,10 +104,10 @@ export default function SymptomsPage() {
                     type="button"
                     onClick={() => toggleSymptom(sym)}
                     aria-pressed={checked}
-                    className={`text-sm px-3 py-2 rounded-lg border text-left transition-colors ${
+                    className={`text-sm px-3 py-1.5 rounded-full border text-center font-medium transition-colors ${
                       checked
-                        ? "border-primary-400 bg-primary-50 text-primary-800"
-                        : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                        ? "chip-active"
+                        : "chip"
                     }`}
                   >
                     {t(`symptoms.symptom.${sym}`, { defaultValue: sym })}
@@ -145,7 +145,7 @@ export default function SymptomsPage() {
         ) : (symptoms.data?.items ?? []).length === 0 ? (
           <EmptyState title={t("symptoms.none")} />
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-rose-100/60">
             {(symptoms.data?.items ?? [])
               .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
               .map((entry) => (

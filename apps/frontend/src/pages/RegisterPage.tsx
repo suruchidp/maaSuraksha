@@ -82,13 +82,13 @@ export default function RegisterPage() {
   });
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-accent-50 py-12 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-maternal-sheen py-12 px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <Link to="/" className="text-2xl font-bold text-gray-900">
+          <Link to="/" className="font-display text-3xl font-semibold text-gray-900">
             {t("app.name")}
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900 mt-4">
+          <h1 className="font-display text-2xl font-semibold text-gray-900 mt-2">
             {t("auth.registerTitle")}
           </h1>
         </div>

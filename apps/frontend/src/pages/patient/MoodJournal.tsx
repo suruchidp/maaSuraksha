@@ -95,7 +95,7 @@ export default function MoodJournalPage() {
         ) : (entries.data?.items ?? []).length === 0 ? (
           <EmptyState title={t("mood.none")} description={t("mood.noneDescription")} />
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-rose-100/60">
             {(entries.data?.items ?? [])
               .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
               .map((entry) => (

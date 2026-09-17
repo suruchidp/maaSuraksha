@@ -3,6 +3,17 @@
     "name": "MaaSuraksha",
     "tagline": "Maternal Health Monitoring & Decision Support"
   },
+  "home": {
+    "features": "Features",
+    "featurePregnancy": "Pregnancy tracking",
+    "featurePregnancyDesc": "Follow your pregnancy journey week by week",
+    "featureMetrics": "Health monitoring",
+    "featureMetricsDesc": "Track vital health indicators",
+    "featureAssessments": "AI risk assessments",
+    "featureAssessmentsDesc": "Early, explainable risk detection",
+    "featureAlerts": "Timely alerts",
+    "featureAlertsDesc": "Alerts for health concerns that matter"
+  },
   "nav": {
     "home": "Home",
     "dashboard": "Dashboard",
@@ -168,6 +179,11 @@
     },
     "dashboard": {
       "subtitle": "Your health information and care reminders in one place.",
+      "heroGreeting": "Hello, {{name}}",
+      "heroSubPregnancy": "Here's how you and your baby are doing.",
+      "heroSubNoPregnancy": "Set up your pregnancy profile to begin your journey.",
+      "yourWeek": "Your week",
+      "dueDateOn": "Due {{date}}",
       "gestationalWeek": "Gestational Week",
       "setUpPregnancy": "Set up pregnancy profile",
       "dueDate": "Due {{date}}",
@@ -179,7 +195,18 @@
       "nextAppointment": "Next Appointment",
       "bookAppointment": "Book an appointment",
       "recentAlerts": "Recent Alerts",
-      "upcomingAppointments": "Upcoming Appointments"
+      "upcomingAppointments": "Upcoming Appointments",
+      "healthOverview": "Health Overview",
+      "recentAssessments": "Recent Assessments",
+      "recentAssessmentsEmpty": "No assessments yet",
+      "recentAssessmentsEmptyDesc": "Run an assessment to see your results here.",
+      "viewAllAssessments": "View all assessments",
+      "quickMetrics": "Vitals and trends",
+      "quickAssessments": "AI risk checks",
+      "quickAppointments": "Book and manage visits",
+      "quickRecommendations": "Personalized care advice",
+      "quickDiet": "Trimester meal plans",
+      "quickAlerts": "Important health notices"
     }
   },
   "pregnancy": {

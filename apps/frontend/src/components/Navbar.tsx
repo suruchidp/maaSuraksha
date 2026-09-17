@@ -10,14 +10,16 @@ export default function Navbar() {
   const homePath = user ? `/${user.role.toLowerCase()}/dashboard` : "/login";
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-100">
+    <nav className="bg-cream-50/80 backdrop-blur-sm border-b border-rose-100/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
+            <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-sm">
               <span className="text-white font-bold text-sm">M</span>
             </div>
-            <span className="text-xl font-bold text-gray-900">{t("app.name")}</span>
+            <span className="font-display text-xl font-semibold text-gray-900">
+              {t("app.name")}
+            </span>
           </Link>
           <div className="flex items-center space-x-3">
             <LanguageSwitcher />
@@ -25,7 +27,7 @@ export default function Navbar() {
               <>
                 <Link
                   to={homePath}
-                  className="text-gray-600 hover:text-primary-600 font-medium text-sm"
+                  className="text-gray-600 hover:text-primary-700 font-medium text-sm"
                 >
                   {t("nav.dashboard")}
                 </Link>
@@ -37,7 +39,7 @@ export default function Navbar() {
               <>
                 <Link
                   to="/login"
-                  className="text-gray-600 hover:text-primary-600 font-medium text-sm"
+                  className="text-gray-600 hover:text-primary-700 font-medium text-sm"
                 >
                   {t("nav.login")}
                 </Link>

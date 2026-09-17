@@ -6,13 +6,16 @@
   font-family: "Inter", "Noto Sans Devanagari", "Noto Sans Kannada", sans-serif;
   line-height: 1.5;
   font-weight: 400;
+  color-scheme: light;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: #fafafa;
-  color: #1a1a2e;
+  background-color: #fdf9f3;
+  color: #332a35;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 @layer base {
@@ -28,33 +31,72 @@ body {
   h6 {
     font-weight: 600;
     line-height: 1.2;
+    color: #3a2c37;
+  }
+
+  ::selection {
+    background-color: #fbe4ee;
+    color: #6e2940;
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-primary-600 text-white px-4 py-2 rounded-lg font-medium
-           hover:bg-primary-700 transition-colors duration-200
-           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply inline-flex items-center justify-center gap-2 bg-primary-600 text-white rounded-xl font-medium
+           hover:bg-primary-700 transition-colors duration-200 shadow-sm
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-cream-50;
   }
 
   .btn-secondary {
-    @apply bg-white text-primary-700 border border-primary-300 px-4 py-2 rounded-lg font-medium
+    @apply inline-flex items-center justify-center gap-2 bg-white text-primary-700 border border-primary-200 rounded-xl font-medium
            hover:bg-primary-50 transition-colors duration-200
-           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-cream-50;
   }
 
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6;
+    @apply bg-white rounded-2xl shadow-card border border-rose-100/70 p-6;
   }
 
   .input-field {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg
-           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
-           placeholder:text-gray-400;
+    @apply w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-800
+           focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400
+           placeholder:text-gray-400 transition-colors duration-150;
   }
 
   .label {
-    @apply block text-sm font-medium text-gray-700 mb-1;
+    @apply block text-sm font-medium text-gray-600 mb-1;
+  }
+
+  /* Section heading used inside cards and page sections */
+  .section-title {
+    @apply font-display text-lg text-gray-900;
+  }
+
+  /* Rounded pill used for quick filters and category chips */
+  .chip {
+    @apply px-3.5 py-1.5 text-sm rounded-full border transition-colors;
+  }
+
+  .chip-active {
+    @apply bg-primary-600 text-white border-primary-600 shadow-sm;
+  }
+
+  .chip-inactive {
+    @apply bg-white text-gray-600 border-gray-200 hover:border-primary-300 hover:text-primary-700;
+  }
+
+  /* Thin decorative hairline used to divide lists inside cards */
+  .hairline {
+    @apply divide-y divide-rose-100/70;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: "Fraunces", "Noto Serif Devanagari", "Noto Serif Kannada", Georgia, serif;
+  }
+
+  .text-balance {
+    text-wrap: balance;
   }
 }

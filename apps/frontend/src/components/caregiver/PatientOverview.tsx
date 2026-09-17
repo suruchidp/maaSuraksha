@@ -97,7 +97,7 @@ export function PatientOverview({ patient }: { patient: UserDTO }) {
                 <div>
                   <dt className="text-xs text-gray-500">{t("metrics.bp")}</dt>
                   <dd className="font-medium text-gray-900 mt-0.5">
-                    {metricItems[0].systolicBP}/{metricItems[0].diastolicBP ?? "—"} mmHg
+                    {metricItems[0].systolicBP}/{metricItems[0].diastolicBP ?? "â€”"} mmHg
                   </dd>
                 </div>
               )}
@@ -134,7 +134,7 @@ export function PatientOverview({ patient }: { patient: UserDTO }) {
           ) : (alerts.data?.items ?? []).length === 0 ? (
             <EmptyState title={t("alerts.none")} />
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-rose-100/60">
               {(alerts.data?.items ?? []).map((alert) => (
                 <li key={alert.id} className="py-3 flex items-start gap-3">
                   <SeverityBadge severity={alert.severity} />
@@ -160,14 +160,14 @@ export function PatientOverview({ patient }: { patient: UserDTO }) {
             {(appointments.data?.items ?? []).length === 0 ? (
               <EmptyState title={t("appointments.none")} />
             ) : (
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-rose-100/60">
                 {(appointments.data?.items ?? []).slice(0, 4).map((appt) => (
                   <li key={appt.id} className="py-2 flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">
                         {t(`appointments.typeOptions.${appt.type}`, { defaultValue: appt.type })}
                       </p>
-                      <p className="text-xs text-gray-500">{formatDate(appt.date, lang)} · {appt.time}</p>
+                      <p className="text-xs text-gray-500">{formatDate(appt.date, lang)} Â· {appt.time}</p>
                     </div>
                     <AppointmentStatusBadge status={appt.status} />
                   </li>
@@ -180,7 +180,7 @@ export function PatientOverview({ patient }: { patient: UserDTO }) {
             {(referrals.data?.items ?? []).length === 0 ? (
               <EmptyState title={t("referrals.none")} />
             ) : (
-              <ul className="divide-y divide-gray-100">
+              <ul className="divide-y divide-rose-100/60">
                 {(referrals.data?.items ?? []).slice(0, 4).map((ref) => (
                   <li key={ref.id} className="py-2 flex items-center justify-between gap-3">
                     <div className="min-w-0">

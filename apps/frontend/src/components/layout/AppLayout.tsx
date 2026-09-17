@@ -5,7 +5,6 @@ import {
   Menu,
   X,
   Home,
-  User,
   Heart,
   Activity,
   FileText,
@@ -108,17 +107,17 @@ export default function AppLayout() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 z-40 transform transition-transform duration-200 ${
+        className={`fixed inset-y-0 left-0 w-64 bg-cream-50/70 backdrop-blur-sm border-r border-rose-100/70 z-40 transform transition-transform duration-200 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
         aria-label={t("nav.sidebar")}
       >
-        <div className="flex items-center gap-2 px-5 py-4 border-b border-gray-100">
+        <div className="flex items-center gap-2 px-5 py-4 border-b border-rose-100/70">
           <Link to={homePath} className="flex items-center gap-2 font-bold text-gray-900">
-            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
+            <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-sm">
               <span className="text-white font-bold text-sm">M</span>
             </div>
-            <span>{t("app.name")}</span>
+            <span className="font-display">{t("app.name")}</span>
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -135,10 +134,10 @@ export default function AppLayout() {
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                `flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                   isActive
-                    ? "bg-primary-50 text-primary-700"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    ? "bg-primary-100/80 text-primary-800 shadow-sm"
+                    : "text-gray-600 hover:bg-white hover:text-primary-700"
                 }`
               }
             >
@@ -152,7 +151,7 @@ export default function AppLayout() {
       {/* Main */}
       <div className="flex-1 lg:ml-64 flex flex-col">
         {/* Top bar */}
-        <header className="sticky top-0 z-20 bg-white border-b border-gray-100 px-4 sm:px-6 py-3 flex items-center gap-4">
+        <header className="sticky top-0 z-20 bg-cream-50/85 backdrop-blur-sm border-b border-rose-100/60 px-4 sm:px-6 py-3 flex items-center gap-4">
           <button
             onClick={() => setSidebarOpen(true)}
             className="lg:hidden text-gray-600 hover:text-gray-900 p-1"
@@ -163,22 +162,26 @@ export default function AppLayout() {
           <div className="flex-1 min-w-0" />
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
-            <div className="hidden sm:flex items-center gap-2 text-sm text-gray-600">
-              <User className="w-4 h-4" />
-              <span className="font-medium truncate max-w-[120px]">{user.name}</span>
+            <div className="hidden sm:flex items-center gap-2 pl-3 border-l border-rose-100/70 text-sm text-gray-600">
+              <span className="w-7 h-7 rounded-full bg-gradient-to-br from-primary-200 to-lavender-300 text-primary-800 flex items-center justify-center text-xs font-semibold">
+                {user.name.charAt(0)}
+              </span>
+              <span className="font-medium truncate max-w-[130px]">{user.name}</span>
               <span className="text-xs text-gray-400">{t("roles." + user.role)}</span>
             </div>
-            <Button variant="ghost" size="sm" onClick={logout}>
+            <Button variant="outline" size="sm" onClick={logout}>
               {t("nav.logout")}
             </Button>
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">
-          <Outlet />
+        <main className={`flex-1 p-4 sm:p-6 lg:p-8 ${sidebarOpen ? "lg:ml-0" : ""}`}>
+          <div className="max-w-screen-xl mx-auto">
+            <Outlet />
+          </div>
         </main>
 
-        <footer className="text-center text-xs text-gray-400 py-3 border-t border-gray-100">
+        <footer className="text-center text-xs text-gray-400 py-3 border-t border-rose-100/60 bg-cream-50/40">
           {t("footer.disclaimer")}
         </footer>
       </div>

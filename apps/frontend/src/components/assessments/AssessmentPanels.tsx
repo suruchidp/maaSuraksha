@@ -214,7 +214,7 @@ export function MaternalRiskPanel({ userId }: { userId: string }) {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-gray-900">
                 {a.riskLevel ? t(`assessments.risk.${a.riskLevel}`, { defaultValue: a.riskLevel }) : t("common.notAvailable")}
-                {a.riskScore !== undefined && a.riskScore !== null ? ` · ${Math.round(a.riskScore * 100)}%` : ""}
+                {a.riskScore !== undefined && a.riskScore !== null ? ` Â· ${Math.round(a.riskScore * 100)}%` : ""}
               </p>
               <p className="text-xs text-gray-500 mt-0.5">{formatDate(a.createdAt, lang)}</p>
             </div>
@@ -389,7 +389,7 @@ export function GDMPanel({ userId }: { userId: string }) {
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-gray-900">
                 {a.riskLevel ? t(`assessments.risk.${a.riskLevel}`, { defaultValue: a.riskLevel }) : t("common.notAvailable")}
-                {a.riskScore !== undefined && a.riskScore !== null ? ` · ${Math.round(a.riskScore * 100)}%` : ""}
+                {a.riskScore !== undefined && a.riskScore !== null ? ` Â· ${Math.round(a.riskScore * 100)}%` : ""}
               </p>
               <p className="text-xs text-gray-500 mt-0.5">{formatDate(a.createdAt, lang)}</p>
             </div>
@@ -583,7 +583,7 @@ export function AssessmentHistory({
       ) : error ? (
         <ErrorState message={error} onRetry={onRetry} />
       ) : (
-        <ul className="divide-y divide-gray-100">{children}</ul>
+        <ul className="divide-y divide-rose-100/60">{children}</ul>
       )}
     </div>
   );

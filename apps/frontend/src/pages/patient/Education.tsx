@@ -90,9 +90,7 @@ export default function EducationPage() {
             {(selected.tags?.length ?? 0) > 0 && (
               <div className="flex flex-wrap gap-1">
                 {selected.tags.map((tag) => (
-                  <span key={tag} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                    {tag}
-                  </span>
+                  <span key={tag} className="chip">{tag}</span>
                 ))}
               </div>
             )}
@@ -116,10 +114,10 @@ function CategoryChip({
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+      className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
         active
-          ? "bg-primary-600 text-white border-primary-600"
-          : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+          ? "chip-active"
+          : "chip"
       }`}
     >
       {label}

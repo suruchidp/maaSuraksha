@@ -19,6 +19,8 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { TrimesterLabel } from "@/components/status/StatusLabels";
+import { MaternalHero } from "@/components/illustrations/MaternalHero";
+import { BotanicalSprig } from "@/components/illustrations/Botanical";
 
 type PregnancyForm = {
   lmp: string;
@@ -113,8 +115,15 @@ export default function PregnancyPage() {
           />
         ) : null
       ) : (
-        <Card title={t("pregnancy.currentProfile")}>
-            <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card
+          title={t("pregnancy.currentProfile")}
+          tone={pregnancy.data?.isHighRisk ? "blush" : "white"}
+        >
+          {!pregnancy.data?.isHighRisk && (
+            <BotanicalSprig className="absolute -top-2 -right-2 w-20 opacity-50" tone="sage" />
+          )}
+          <div className="flex flex-col lg:flex-row gap-6">
+            <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
               <div>
                 <dt className="text-xs text-gray-500">{t("pregnancy.dueDate")}</dt>
                 <dd className="text-sm font-medium text-gray-900 mt-0.5">
@@ -173,7 +182,13 @@ export default function PregnancyPage() {
                 )
               )}
             </dl>
-          </Card>
+            {!pregnancy.data?.isHighRisk && (
+              <div className="hidden lg:flex items-center w-40 shrink-0">
+                <MaternalHero id="pregnancy-hero" />
+              </div>
+            )}
+          </div>
+        </Card>
       )}
 
       {(hasProfile || showCreateForm) && (

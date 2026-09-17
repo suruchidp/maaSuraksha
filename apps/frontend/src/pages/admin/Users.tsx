@@ -110,8 +110,8 @@ export default function AdminUsersPage() {
           <Field label={t("auth.language")} htmlFor="u-language">
             <Select id="u-language" {...register("language")}>
               <option value={Language.EN}>English</option>
-              <option value={Language.HI}>हिन्दी</option>
-              <option value={Language.KN}>ಕನ್ನಡ</option>
+              <option value={Language.HI}>à¤¹à¤¿à¤¨à¥à¤¦à¥€</option>
+              <option value={Language.KN}>à²•à²¨à³à²¨à²¡</option>
             </Select>
           </Field>
           <div className="col-span-2 lg:col-span-3">
@@ -152,7 +152,7 @@ export default function AdminUsersPage() {
                   <th className="py-2 font-medium">{t("common.actions")}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-rose-100/60">
                 {filtered.map((u) => (
                   <tr key={u.id}>
                     <td className="py-2 pr-3 font-medium text-gray-900">{u.name}</td>

@@ -87,7 +87,7 @@ export default function HealthMetricsPage() {
     <div className="space-y-6">
       <PageHeader title={t("metrics.title")} subtitle={t("metrics.subtitle")} />
 
-      <Card title={t("metrics.logTitle")}>
+      <Card title={t("metrics.logTitle")} tone="peach">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <Field label={t("metrics.date")} htmlFor="date" error={errors.date?.message}>
@@ -177,7 +177,7 @@ export default function HealthMetricsPage() {
           </Card>
 
           <Card title={t("metrics.history")}>
-            <ul className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
+            <ul className="divide-y divide-rose-100/60 max-h-96 overflow-y-auto">
               {[...items]
                 .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                 .map((m) => (

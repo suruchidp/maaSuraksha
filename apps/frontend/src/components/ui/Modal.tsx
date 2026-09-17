@@ -46,14 +46,14 @@ export function Modal({
       onClick={onClose}
     >
       <div
-        className={`bg-white rounded-xl shadow-xl w-full ${sizeClass} max-h-[90vh] flex flex-col`}
+        className={`bg-white rounded-2xl shadow-soft w-full ${sizeClass} max-h-[90vh] flex flex-col border border-rose-100/60`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-rose-100/70">
+          <h2 className="font-display text-lg font-semibold text-gray-900">{title}</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100"
+            className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-rose-50"
             aria-label={t("common.close")}
           >
             <X className="w-5 h-5" />
@@ -61,7 +61,7 @@ export function Modal({
         </div>
         <div className="px-5 py-4 overflow-y-auto flex-1">{children}</div>
         {footer && (
-          <div className="px-5 py-3 border-t border-gray-100 flex justify-end gap-2">
+          <div className="px-5 py-3 border-t border-rose-100/70 flex justify-end gap-2">
             {footer}
           </div>
         )}
