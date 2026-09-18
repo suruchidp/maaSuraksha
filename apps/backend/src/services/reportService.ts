@@ -1,120 +1,263 @@
-import { isValidObjectId } from "mongoose";
-import { Report } from "../models/Report";
-import { ApiError } from "../utils/ApiError";
-import { getAccessiblePatientIds } from "./accessService";
+import { reportSchema } from "@maasuraksha/shared";
+import type { ReportInput } from "@maasuraksha/shared";
 import { AuthUser } from "../middleware/auth";
+import { ApiError } from "../utils/ApiError";
+import { Report } from "../models/Report";
+import { User } from "../models/User";
+import { PregnancyProfile } from "../models/PregnancyProfile";
+import { HealthMetric } from "../models/HealthMetric";
+import { Symptom } from "../models/Symptom";
+import { MaternalRiskAssessment } from "../models/MaternalRiskAssessment";
+import { GDMAssessment } from "../models/GDMAssessment";
+import { PPDAssessment } from "../models/PPDAssessment";
+import { Appointment } from "../models/Appointment";
+import { Referral } from "../models/Referral";
+import { HealthRecord } from "../models/HealthRecord";
+import {
+  recordPatient,
+  recordListFilter,
+  recordId,
+  assertRecordAccess,
+} from "./recordAccess";
 
-const REPORT_TYPES = new Set([
-  "pregnancy_summary",
-  "health_metrics",
-  "risk_assessment",
-  "gdm_assessment",
-  "ppd_assessment",
-  "mood_history",
-  "comprehensive",
-]);
-
-export interface ReportInput {
-  type: string;
-  data: Record<string, unknown>;
-  title?: string;
-}
-
-export async function createReport(
-  actor: AuthUser,
-  targetUserId: string | undefined,
-  input: ReportInput
+async function bounded(
+  query: PromiseLike<unknown[]>,
+  count: PromiseLike<number>,
 ) {
-  if (!REPORT_TYPES.has(input.type)) {
-    throw ApiError.badRequest("Invalid report type");
-  }
-
-  const allowed = await getAccessiblePatientIds(actor);
-  const userId = resolveTargetPatient(actor, targetUserId, allowed);
-
-  const report = await Report.create({
-    user: userId,
-    type: input.type,
-    data: input.data,
-    title: input.title ?? `Report - ${input.type}`,
-    generatedBy: actor.userId,
-  });
-
-  return toDto(report);
-}
-
-export async function listReports(
-  actor: AuthUser,
-  targetUserId: string | undefined,
-  page: number,
-  limit: number
-) {
-  const allowed = await getAccessiblePatientIds(actor);
-  if (targetUserId) assertAllowed(actor, targetUserId, allowed);
-
-  const filter: Record<string, unknown> = targetUserId
-    ? { user: targetUserId }
-    : { user: { $in: Array.from(allowed) } };
-
-  const total = await Report.countDocuments(filter);
-  const items = await Report.find(filter)
-    .sort({ createdAt: -1 })
-    .skip((page - 1) * limit)
-    .limit(limit);
-
+  const [items, total] = await Promise.all([query, count]);
   return {
-    items: items.map((r) => ({ ...toDto(r), data: undefined })),
+    items,
     total,
+    included: items.length,
+    truncated: total > items.length,
   };
 }
-
-export async function getReport(actor: AuthUser, reportId: string) {
-  validateId(reportId);
-  const allowed = await getAccessiblePatientIds(actor);
-  const report = await Report.findById(reportId);
-  if (!report) throw ApiError.notFound("Report not found");
-  assertAllowed(actor, report.user.toString(), allowed);
-  return toDto(report);
-}
-
-function resolveTargetPatient(
+export async function createReport(
   actor: AuthUser,
-  targetUserId: string | undefined,
-  allowed: Set<string>
-): string {
-  if (actor.role === "ADMIN") {
-    if (!targetUserId) throw ApiError.badRequest("userId is required");
-    validateId(targetUserId);
-    return targetUserId;
+  target: string | undefined,
+  input: ReportInput,
+) {
+  const parsed = reportSchema.safeParse(input);
+  if (!parsed.success)
+    throw ApiError.badRequest(parsed.error.issues[0].message);
+  input = parsed.data;
+  const user = await recordPatient(actor, target);
+  const patient = await User.findById(user).select("name");
+  const window: Record<string, Date> = {};
+  if (input.fromDate)
+    window.$gte = new Date(`${input.fromDate}T00:00:00+05:30`);
+  if (input.toDate)
+    window.$lt = new Date(
+      new Date(`${input.toDate}T00:00:00+05:30`).getTime() + 86400000,
+    );
+  const filter = (field: string, owner = "user") => ({
+    [owner]: user,
+    ...(Object.keys(window).length ? { [field]: window } : {}),
+  });
+  // Calendar-date records are stored at UTC midnight, not as India-time instants.
+  const calendarFilter = (owner = "user") => ({
+    [owner]: user,
+    ...(input.fromDate || input.toDate
+      ? {
+          date: {
+            ...(input.fromDate
+              ? { $gte: new Date(`${input.fromDate}T00:00:00Z`) }
+              : {}),
+            ...(input.toDate
+              ? {
+                  $lt: new Date(
+                    new Date(`${input.toDate}T00:00:00Z`).getTime() + 86400000,
+                  ),
+                }
+              : {}),
+          },
+        }
+      : {}),
+  });
+  const sections: Record<string, unknown> = {};
+  const comprehensive = input.type === "comprehensive";
+  const tasks: Promise<void>[] = [];
+  if (comprehensive || input.type === "pregnancy_summary")
+    tasks.push(
+      (async () => {
+        sections.pregnancy = await PregnancyProfile.findOne({ user })
+          .select(
+            "-_id lmp expectedDueDate gravida para isHighRisk riskFactors medicalHistory",
+          )
+          .lean();
+      })(),
+    );
+  if (comprehensive || input.type === "health_metrics")
+    tasks.push(
+      (async () => {
+        const f = filter("date");
+        sections.healthMetrics = await bounded(
+          HealthMetric.find(f)
+            .select(
+              "-_id date systolicBP diastolicBP weight glucose heartRate temperature hemoglobin notes",
+            )
+            .sort({ date: -1, _id: -1 })
+            .limit(100)
+            .lean(),
+          HealthMetric.countDocuments(f),
+        );
+      })(),
+    );
+  if (comprehensive || input.type === "risk_assessment")
+    tasks.push(
+      (async () => {
+        const f = filter("createdAt");
+        sections.maternalAssessments = await bounded(
+          MaternalRiskAssessment.find(f)
+            .select("-_id createdAt status riskLevel riskScore")
+            .sort({ createdAt: -1, _id: -1 })
+            .limit(100)
+            .lean(),
+          MaternalRiskAssessment.countDocuments(f),
+        );
+      })(),
+    );
+  if (comprehensive || input.type === "gdm_assessment")
+    tasks.push(
+      (async () => {
+        const f = filter("createdAt");
+        sections.gdmAssessments = await bounded(
+          GDMAssessment.find(f)
+            .select("-_id createdAt status riskLevel riskScore")
+            .sort({ createdAt: -1, _id: -1 })
+            .limit(100)
+            .lean(),
+          GDMAssessment.countDocuments(f),
+        );
+      })(),
+    );
+  if (comprehensive || input.type === "ppd_assessment")
+    tasks.push(
+      (async () => {
+        const f = filter("createdAt");
+        sections.ppdAssessments = await bounded(
+          PPDAssessment.find(f)
+            .select("-_id createdAt status severity edinburghScore")
+            .sort({ createdAt: -1, _id: -1 })
+            .limit(100)
+            .lean(),
+          PPDAssessment.countDocuments(f),
+        );
+      })(),
+    );
+  if (comprehensive) {
+    tasks.push(
+      (async () => {
+        const f = filter("date");
+        sections.symptoms = await bounded(
+          Symptom.find(f)
+            .select(
+              "-_id date symptoms severity onset durationHours frequency notes",
+            )
+            .sort({ date: -1, _id: -1 })
+            .limit(100)
+            .lean(),
+          Symptom.countDocuments(f),
+        );
+      })(),
+    );
+    tasks.push(
+      (async () => {
+        const f = calendarFilter("patient");
+        sections.appointments = await bounded(
+          Appointment.find(f)
+            .select("-_id date time type status notes cancelledReason")
+            .sort({ date: -1, time: -1, _id: -1 })
+            .limit(100)
+            .lean(),
+          Appointment.countDocuments(f),
+        );
+      })(),
+    );
+    tasks.push(
+      (async () => {
+        const f = filter("createdAt", "patient");
+        sections.referrals = await bounded(
+          Referral.find(f)
+            .select("-_id createdAt facility reason notes status")
+            .sort({ createdAt: -1, _id: -1 })
+            .limit(100)
+            .lean(),
+          Referral.countDocuments(f),
+        );
+      })(),
+    );
+    tasks.push(
+      (async () => {
+        const f = { ...calendarFilter(), isArchived: false };
+        sections.healthRecords = await bounded(
+          HealthRecord.find(f)
+            .select(
+              "-_id category title date provider details authorRole updatedAt",
+            )
+            .sort({ date: -1, _id: -1 })
+            .limit(100)
+            .lean(),
+          HealthRecord.countDocuments(f),
+        );
+      })(),
+    );
   }
-  if (targetUserId) {
-    assertAllowed(actor, targetUserId, allowed);
-    return targetUserId;
-  }
-  if (actor.role === "PATIENT") return actor.userId;
-  throw ApiError.badRequest("userId is required");
+  await Promise.all(tasks);
+  const report = await Report.create({
+    user,
+    type: input.type,
+    title: input.title ?? `Health report - ${input.type.replace(/_/g, " ")}`,
+    generatedBy: actor.userId,
+    data: {
+      schemaVersion: 1,
+      generatedAt: new Date().toISOString(),
+      patient: { name: patient!.name },
+      range: {
+        fromDate: input.fromDate ?? null,
+        toDate: input.toDate ?? null,
+        timeZone: "Asia/Kolkata",
+      },
+      sections,
+    },
+  });
+  return dto(report);
 }
-
-function assertAllowed(actor: AuthUser, userId: string, allowed: Set<string>): void {
-  if (actor.role === "ADMIN") return;
-  if (!allowed.has(userId)) {
-    throw ApiError.forbidden("You do not have access to this patient's data");
-  }
+export async function listReports(
+  actor: AuthUser,
+  target: string | undefined,
+  page: number,
+  limit: number,
+  type?: string,
+) {
+  if (type && !reportSchema.safeParse({ type }).success)
+    throw ApiError.badRequest("Invalid report type");
+  const filter = await recordListFilter(actor, target);
+  if (type) filter.type = type;
+  const total = await Report.countDocuments(filter);
+  const items = await Report.find(filter)
+    .select("-data")
+    .sort({ createdAt: -1, _id: -1 })
+    .skip((page - 1) * limit)
+    .limit(limit);
+  return { items: items.map(dto), total };
 }
-
-function validateId(id: string): void {
-  if (!isValidObjectId(id)) throw ApiError.badRequest("Invalid id format");
+export async function getReport(actor: AuthUser, id: string) {
+  recordId(id);
+  const r = await Report.findById(id);
+  if (!r) throw ApiError.notFound("Report not found");
+  await assertRecordAccess(actor, r.user.toString());
+  return dto(r);
 }
-
-function toDto(report: InstanceType<typeof Report>) {
+function dto(r: InstanceType<typeof Report>) {
   return {
-    id: report._id,
-    user: report.user,
-    type: report.type,
-    title: report.title,
-    data: report.data,
-    generatedBy: report.generatedBy,
-    createdAt: report.createdAt,
-    updatedAt: report.updatedAt,
+    id: r._id,
+    user: r.user,
+    type: r.type,
+    title: r.title,
+    data: r.data,
+    generatedBy: r.generatedBy,
+    createdAt: r.createdAt,
+    updatedAt: r.updatedAt,
   };
 }

@@ -1,3 +1,4 @@
+import healthRecordRoutes from "./routes/healthRecords";
 import { seedEducationResources } from "./services/educationContent";
 import { EducationProgress } from "./models/EducationProgress";
 import { startAlertWorker } from "./services/alertWorker";
@@ -69,6 +70,7 @@ app.use("/api/v1/appointments", appointmentRoutes);
 app.use("/api/v1/education", educationRoutes);
 app.use("/api/v1/chat", chatRoutes);
 app.use("/api/v1/reports", reportRoutes);
+app.use("/api/v1/health-records", healthRecordRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/patients", patientRoutes);
 

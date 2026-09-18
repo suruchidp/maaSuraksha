@@ -480,18 +480,20 @@ export function useSendMessage(conversationId: string) {
 }
 
 /* ---- Reports ---- */
-export function useReports(limit = 50) {
+export function useReports(limit = 20, userId?: string, page = 1) {
+  const actorId = useAuthStore((s) => s.user?.id);
   return useQuery({
-    queryKey: qk.reports,
-    queryFn: () => listReports({ page: 1, limit }),
+    queryKey: [...qk.reports, actorId, userId, page, limit],
+    queryFn: () => listReports({ page, limit, userId }),
+    enabled: !!actorId,
   });
 }
 
 export function useCreateReport() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ input, userId }: { input: unknown; userId: string }) =>
-      createReport(input as never, userId),
+    mutationFn: ({ input, userId }: { input: import("@maasuraksha/shared").ReportInput; userId?: string }) =>
+      createReport(input, userId),
     onSuccess: () => void qc.invalidateQueries({ queryKey: qk.reports }),
   });
 }

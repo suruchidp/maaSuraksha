@@ -1,3 +1,4 @@
+import ReportsPage from "@/pages/patient/Reports";
 import AppointmentsPage from "@/pages/patient/Appointments";
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "react-router-dom";
@@ -27,6 +28,7 @@ export default function ASHAPatientDetailPage() {
       </div>
       <PatientOverview patient={patient} />
       <AppointmentsPage key={patient.id} patientId={patient.id} />
+      <ReportsPage key={`reports-${patient.id}`} patientId={patient.id} />
       <ASHAActionForms patientId={patient.id} />
     </div>
   );

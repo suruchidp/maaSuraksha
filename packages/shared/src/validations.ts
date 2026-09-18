@@ -206,10 +206,19 @@ export const alertSchema = z.object({
 });
 
 export const reportSchema = z.object({
-  type: z.string().min(1),
-  data: z.record(z.string(), z.any()),
-  title: z.string().min(1).max(200).optional(),
-});
+ type: z.enum(["pregnancy_summary", "health_metrics", "risk_assessment", "gdm_assessment", "ppd_assessment", "comprehensive"]),
+ title: z.string().trim().min(1).max(200).optional(),
+ fromDate: z.string().refine(validAppointmentDate, "Invalid date").optional(),
+ toDate: z.string().refine(validAppointmentDate, "Invalid date").optional(),
+}).strict().refine(v => !v.fromDate || !v.toDate || v.fromDate <= v.toDate, { message: "Start date must precede end date", path: ["fromDate"] });
+
+export const healthRecordSchema = z.object({
+ category: z.enum(["lab_result", "ultrasound", "prescription", "discharge", "visit", "other"]),
+ title: z.string().trim().min(1).max(200),
+ date: z.string().refine(v => validAppointmentDate(v) && v <= new Date(Date.now()+330*60000).toISOString().slice(0,10), "Invalid or future date"),
+ provider: z.string().trim().max(200).optional(),
+ details: z.string().trim().min(1).max(10000),
+}).strict();
 
 export const educationalContentSchema = z.object({
   title: z.object({ en: z.string().trim().min(1).max(200), hi: z.string().trim().min(1).max(200), kn: z.string().trim().min(1).max(200) }),
@@ -238,3 +247,5 @@ export type DietPlanInput = z.infer<typeof dietPlanSchema>;
 export type DietGuidancePreferencesInput = z.infer<typeof dietGuidancePreferencesSchema>;
 export type AlertInput = z.infer<typeof alertSchema>;
 export type ReportInput = z.infer<typeof reportSchema>;
+
+export type HealthRecordInput = z.infer<typeof healthRecordSchema>;

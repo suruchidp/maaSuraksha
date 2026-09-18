@@ -71,3 +71,6 @@ export type {
 
 export { symptomTriage } from "./symptomTriage";
 export { appointmentStart, appointmentToday, validAppointmentDate, APPOINTMENT_TIME_ZONE } from "./appointmentTime";
+
+export { healthRecordSchema } from "./validations";
+export type { HealthRecordInput } from "./validations";

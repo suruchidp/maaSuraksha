@@ -1,3 +1,4 @@
+import ReportsPage from "@/pages/patient/Reports";
 import AppointmentsPage from "@/pages/patient/Appointments";
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "react-router-dom";
@@ -28,6 +29,7 @@ export default function DoctorPatientDetailPage() {
       </div>
       <PatientOverview patient={patient} />
       <AppointmentsPage key={patient.id} patientId={patient.id} />
+      <ReportsPage key={`reports-${patient.id}`} patientId={patient.id} />
 
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-3">{t("doctor.runAssessments")}</h2>
