@@ -9,7 +9,7 @@ export function BrandMark({
   return (
     <img
       id={id}
-      src="/brand-logo.svg"
+      src="/brand-logo.png"
       alt=""
       aria-hidden="true"
       width={48}

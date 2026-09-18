@@ -15,7 +15,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-wrap justify-between items-center gap-x-4 gap-y-2 min-h-16 py-2">
           <Link to="/" className="flex items-center space-x-2.5 min-w-0">
-            <BrandMark className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 shadow-sm" />
+            <BrandMark className="w-8 h-8 sm:w-9 sm:h-9 shrink-0" />
             <span className="flex flex-col leading-tight min-w-0">
               <span className="font-display text-base sm:text-xl font-semibold text-gray-900 whitespace-nowrap">
                 {t("app.name")}

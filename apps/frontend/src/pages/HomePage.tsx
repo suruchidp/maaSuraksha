@@ -47,7 +47,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-10 items-center">
               <div className="text-center lg:text-left">
                 <h1 className="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-4 font-display text-4xl md:text-6xl font-semibold text-gray-900 text-balance">
-                  <BrandMark className="w-12 h-12 sm:w-16 sm:h-16 shadow-soft shrink-0" />
+                  <BrandMark className="w-12 h-12 sm:w-16 sm:h-16 shrink-0" />
                   {t("app.name")}
                 </h1>
                 <p className="mt-5 text-lg md:text-xl text-gray-600 max-w-2xl mx-auto lg:mx-0">

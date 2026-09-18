@@ -64,7 +64,7 @@ export default function LoginPage() {
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex flex-col items-center">
-            <BrandMark className="w-14 h-14 sm:w-16 sm:h-16 shadow-soft" />
+            <BrandMark className="w-14 h-14 sm:w-16 sm:h-16" />
             <span className="font-display text-3xl font-semibold text-gray-900 mt-3">
               {t("app.name")}
             </span>

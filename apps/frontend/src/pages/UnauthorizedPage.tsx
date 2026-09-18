@@ -12,7 +12,7 @@ export default function UnauthorizedPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="text-center max-w-md">
-        <BrandMark className="w-16 h-16 mx-auto shadow-soft" />
+        <BrandMark className="w-16 h-16 mx-auto" />
         <h1 className="text-2xl font-bold text-gray-900 mt-4">
           {t("access.unauthorizedTitle")}
         </h1>
