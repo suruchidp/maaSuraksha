@@ -125,12 +125,14 @@ export function useCreateHealthMetric() {
 }
 
 /* ---- Symptoms ---- */
-export function useSymptoms(targetUserId?: string, limit = 50) {
+export function useSymptoms(targetUserId?: string, limit = 50, page = 1, severity?: string) {
   const selfId = usePatientContext();
+  const actorId = useAuthStore(s => s.user?.id);
   const userId = targetUserId ?? selfId ?? undefined;
   return useQuery({
-    queryKey: qk.symptoms(userId),
-    queryFn: () => listSymptoms({ page: 1, limit, userId }),
+    queryKey: [...qk.symptoms(userId), page, limit, severity, actorId],
+    enabled: !!actorId,
+    queryFn: () => listSymptoms({ page, limit, userId, severity }),
   });
 }
 
@@ -140,7 +142,8 @@ export function useCreateSymptom() {
     mutationFn: ({ input, userId }: { input: unknown; userId?: string }) =>
       createSymptom(input as never, userId),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: qk.symptoms(undefined) });
+      void qc.invalidateQueries({ queryKey: ["symptoms"] });
+      void qc.invalidateQueries({ queryKey: ["alerts"] });
     },
   });
 }

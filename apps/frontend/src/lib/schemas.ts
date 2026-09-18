@@ -68,6 +68,9 @@ export function buildSchemas(t: SchemaMessages) {
     }),
 
     symptom: z.object({
+      onset: z.string().optional(),
+      durationHours: z.number().min(0).max(8760).optional(),
+      frequency: z.union([z.literal(""), z.enum(["once", "occasional", "daily", "constant"])]).optional(),
       symptoms: z
         .array(z.string())
         .min(1, t("validation.atLeastOneSymptom")),

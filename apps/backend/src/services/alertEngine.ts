@@ -1,3 +1,5 @@
+import { Symptom } from "../models/Symptom";
+import { symptomTriage } from "@maasuraksha/shared";
 import { Alert } from "../models/Alert";
 import { HealthMetric } from "../models/HealthMetric";
 import { PregnancyProfile } from "../models/PregnancyProfile";
@@ -15,6 +17,7 @@ export interface AlertContext {
  pregnancy?: { _id: unknown; expectedDueDate: Date; isHighRisk: boolean } | null;
  maternal?: { _id: unknown; status: string; riskLevel?: string } | null;
  gdm?: { _id: unknown; status: string; riskLevel?: string } | null;
+ symptoms?: { _id: unknown; date: Date; symptoms: string[]; severity: string }[];
  appointments?: { _id: unknown; date: Date; time: string; status: string }[];
 }
 export function evaluateAlerts(ctx: AlertContext, now = new Date()): Signal[] {
@@ -51,17 +54,24 @@ export function evaluateAlerts(ctx: AlertContext, now = new Date()): Signal[] {
   const remaining = time.getTime() - now.getTime();
   if (['scheduled','confirmed'].includes(appointment.status) && remaining >= 0 && remaining <= 86400000) add('appointment-reminder', 'appointment', AlertSeverity.INFO, 'Upcoming appointment', `Your appointment is on ${appointment.date.toISOString().slice(0,10)} at ${appointment.time} (India time). Check Appointments for details.`, `appointment:${appointment._id}`);
  }
+ for (const symptom of ctx.symptoms ?? []) {
+  const age = now.getTime() - symptom.date.getTime();
+  if (age < 0 || age > 86400000) continue;
+  const triage = symptomTriage(symptom.symptoms, symptom.severity);
+  if (triage !== "routine") add("symptom-triage", "symptom", triage === "urgent" ? AlertSeverity.URGENT : AlertSeverity.WARNING, triage === "urgent" ? "Urgent symptom assessment" : "Symptom review needed", triage === "urgent" ? "A reported symptom needs immediate medical assessment. Contact maternity services or emergency care now. Do not wait for an app response. This is not a diagnosis." : "Contact your maternity care team promptly to review your symptoms. Seek immediate care if they worsen or something feels wrong.", `symptom:${symptom._id}`);
+ }
  return signals;
 }
 export async function refreshPatientAlerts(user: string, now = new Date()) {
- const [metric, pregnancy, maternal, gdm, appointments, cancelled] = await Promise.all([
+ const [metric, pregnancy, maternal, gdm, appointments, cancelled, symptoms] = await Promise.all([
   HealthMetric.findOne({ user }).sort({ date: -1 }), PregnancyProfile.findOne({ user }),
   MaternalRiskAssessment.findOne({ user }).sort({ createdAt: -1 }), GDMAssessment.findOne({ user }).sort({ createdAt: -1 }),
   Appointment.find({ patient: user, status: { $in: ['scheduled','confirmed'] }, date: { $gte: new Date(now.getTime()-86400000), $lte: new Date(now.getTime()+2*86400000) } }),
-  Appointment.find({ patient: user, status: 'cancelled' }).select('_id')
+  Appointment.find({ patient: user, status: 'cancelled' }).select('_id'),
+  Symptom.find({ user, date: { $gte: new Date(now.getTime()-86400000), $lte: now } })
  ]);
  if (cancelled.length) await Alert.updateMany({ user, source: 'rules-v1:appointment-reminder', status: { $ne: 'resolved' }, dedupeKey: { $in: cancelled.map(item => 'appointment:' + item._id) } }, { $set: { status: 'resolved', readAt: now } });
- for (const signal of evaluateAlerts({ user, metric, pregnancy, maternal, gdm, appointments }, now)) {
+ for (const signal of evaluateAlerts({ user, metric, pregnancy, maternal, gdm, appointments, symptoms }, now)) {
   try {
    await Alert.updateOne({ user, dedupeKey: signal.key }, { $setOnInsert: { user, dedupeKey: signal.key, type: signal.type, severity: signal.severity, title: signal.title, message: signal.message, source: `rules-v1:${signal.rule}` } }, { upsert: true });
   } catch (error) {

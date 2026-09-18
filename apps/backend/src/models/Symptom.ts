@@ -6,6 +6,9 @@ export interface ISymptomDocument extends Document {
   symptoms: string[];
   severity: string;
   notes?: string;
+  onset?: Date;
+  durationHours?: number;
+  frequency?: string;
   reportedBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -32,6 +35,9 @@ const symptomSchema = new Schema<ISymptomDocument>(
       required: true,
       enum: ["mild", "moderate", "severe", "critical"],
     },
+    onset: Date,
+    durationHours: { type: Number, min: 0, max: 8760 },
+    frequency: { type: String, enum: ["once", "occasional", "daily", "constant"] },
     notes: { type: String, maxlength: 1000 },
     reportedBy: {
       type: Schema.Types.ObjectId,

@@ -68,3 +68,5 @@ export type {
   AlertInput,
   ReportInput,
 } from "./validations";
+
+export { symptomTriage } from "./symptomTriage";

@@ -77,6 +77,10 @@ export interface HealthMetricDTO {
 }
 
 export interface SymptomDTO {
+  onset?: string;
+  durationHours?: number;
+  frequency?: string;
+  triage?: "urgent" | "review" | "routine";
   id: string;
   user: string;
   date: string;

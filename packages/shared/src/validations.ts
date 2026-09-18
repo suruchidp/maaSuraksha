@@ -67,11 +67,14 @@ export const healthMetricSchema = z.object({
 });
 
 export const symptomSchema = z.object({
-  symptoms: z.array(z.string()).min(1, "At least one symptom is required"),
-  severity: z.string(),
-  notes: z.string().max(500).optional(),
-  date: z.string().optional(),
-});
+ symptoms: z.array(z.string().trim().min(1).max(100)).min(1).max(30),
+ severity: z.enum(["mild", "moderate", "severe", "critical"]),
+ notes: z.string().trim().max(500).optional(),
+ date: z.string().refine(v => !isNaN(Date.parse(v)) && Date.parse(v) <= Date.now(), "Invalid or future date").optional(),
+ onset: z.string().refine(v => !isNaN(Date.parse(v)) && Date.parse(v) <= Date.now(), "Invalid or future onset").optional(),
+ durationHours: z.number().min(0).max(8760).optional(),
+ frequency: z.enum(["once", "occasional", "daily", "constant"]).optional(),
+}).refine(v => !v.onset || !v.date || Date.parse(v.onset) <= Date.parse(v.date), { message: "Onset must precede the recorded date", path: ["onset"] });
 
 export const pregnancyProfileSchema = z.object({
   lmp: z.string().refine((val) => !isNaN(Date.parse(val)), "Invalid date"),

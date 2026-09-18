@@ -62,6 +62,9 @@ export const COMMON_SYMPTOMS = [
   "urinary_issues",
   "constipation",
   "heartburn",
+  "fluid_leaking", "fainting", "self_harm_thoughts", "fever_38",
+  "extreme_face_hand_swelling", "persistent_severe_headache", "persistent_severe_belly_pain",
+  "unable_to_keep_fluids", "painful_swollen_leg",
 ] as const;
 
 export const EDUCATIONAL_CATEGORIES = [
