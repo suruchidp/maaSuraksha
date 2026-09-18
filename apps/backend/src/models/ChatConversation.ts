@@ -4,6 +4,7 @@ export interface IChatConversationDocument extends Document {
   user: mongoose.Types.ObjectId;
   title?: string;
   lastMessageAt?: Date;
+  busyUntil?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -17,6 +18,7 @@ const chatConversationSchema = new Schema<IChatConversationDocument>(
     },
     title: { type: String, maxlength: 200 },
     lastMessageAt: { type: Date },
+    busyUntil: Date,
   },
   { timestamps: true }
 );

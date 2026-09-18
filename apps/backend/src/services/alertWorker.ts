@@ -1,5 +1,6 @@
 import { User } from "../models/User";
 import { refreshPatientAlerts } from "./alertEngine";
+import { retryChatEscalations } from './chatService';
 
 // Persistent dedupe keys make retries and multiple backend instances safe.
 export function startAlertWorker() {
@@ -8,6 +9,7 @@ export function startAlertWorker() {
   if (running) return;
   running = true;
   try {
+   await retryChatEscalations();
    for await (const user of User.find({ role: 'PATIENT', isActive: true }).select('_id').cursor()) {
     try { await refreshPatientAlerts(user._id.toString()); }
     catch (error) { console.error('Alert refresh failed', error); }

@@ -18,8 +18,9 @@ export async function getConversation(id: string) {
   return httpGet<ChatConversationDTO>(`/chat/${id}`);
 }
 
-export async function sendMessage(conversationId: string, message: string) {
-  const body: ChatMessageInput = { conversationId, message };
+export function getChatCapabilities() {return httpGet<{externalAiAvailable:boolean;externalProvider:string}>('/chat/capabilities');}
+export async function sendMessage(conversationId: string, message: string, options?: {requestId:string;language:'en'|'hi'|'kn';useHealthContext:boolean;allowExternalAi?:boolean}) {
+  const body: ChatMessageInput = { conversationId, message, requestId:options?.requestId ?? crypto.randomUUID(),language:options?.language ?? 'en',useHealthContext:options?.useHealthContext ?? false,allowExternalAi:options?.allowExternalAi ?? false };
   return httpPost<SendMessageResult>(`/chat/${conversationId}/messages`, body);
 }
 

@@ -35,7 +35,7 @@ export const getConversationController = asyncHandler(
 
 export const sendMessageController = asyncHandler(
   async (req: AuthRequest, res: Response) => {
-    const result = await sendMessage(req.user!, req.params.id as string, req.body.message);
+    const result = await sendMessage(req.user!, req.params.id as string, req.body);
     sendSuccess(res, result, 201);
   }
 );

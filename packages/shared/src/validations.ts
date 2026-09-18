@@ -107,8 +107,12 @@ export const appointmentSchema = z.object({
 
 export const chatMessageSchema = z.object({
   conversationId: z.string().optional(),
-  message: z.string().min(1, "Message cannot be empty").max(2000),
-});
+  message: z.string().trim().min(1, "Message cannot be empty").max(2000),
+  requestId: z.string().uuid(),
+  language: z.enum(['en', 'hi', 'kn']).default('en'),
+  useHealthContext: z.boolean().default(false),
+  allowExternalAi: z.boolean().default(false),
+}).strict();
 
 export const referralSchema = z.object({
   patient: z.string().min(1, "Patient is required"),

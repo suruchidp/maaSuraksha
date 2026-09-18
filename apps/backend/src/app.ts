@@ -3,6 +3,8 @@ import { seedEducationResources } from "./services/educationContent";
 import { EducationProgress } from "./models/EducationProgress";
 import { startAlertWorker } from "./services/alertWorker";
 import { Alert } from "./models/Alert";
+import { ChatTurn } from './models/ChatTurn';
+import { Referral } from './models/Referral';
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -89,6 +91,7 @@ async function startServer(): Promise<import("http").Server> {
   try {
     await connectDB();
     await Alert.init();
+    await Promise.all([ChatTurn.init(), Referral.init()]);
     await EducationProgress.init();
     await seedEducationResources();
     const server = app.listen(config.port, () => {
