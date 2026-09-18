@@ -10,6 +10,7 @@ export interface IAlertDocument extends Document {
   status: AlertStatus;
   acknowledgedBy?: mongoose.Types.ObjectId;
   acknowledgedAt?: Date;
+  resolvedByEngine?: boolean;
   source?: string;
   readAt?: Date;
   dedupeKey?: string;
@@ -53,6 +54,7 @@ const alertSchema = new Schema<IAlertDocument>(
     },
     acknowledgedBy: { type: Schema.Types.ObjectId, ref: "User" },
     acknowledgedAt: { type: Date },
+    resolvedByEngine: { type: Boolean },
     source: { type: String, maxlength: 100 },
     readAt: Date,
     dedupeKey: String,

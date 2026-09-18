@@ -78,9 +78,12 @@ export function usePatientContext() {
 /* ---- Pregnancy ---- */
 export function usePregnancy(targetUserId?: string) {
   const selfId = usePatientContext();
+  const actorId = useAuthStore(s => s.user?.id);
   const userId = targetUserId ?? selfId ?? undefined;
   return useQuery({
-    queryKey: qk.pregnancy(userId),
+    queryKey: [...qk.pregnancy(userId), actorId],
+    enabled: !!actorId,
+    refetchInterval: 60000,
     queryFn: () => getPregnancy(userId),
     retry: (count, error: unknown) => {
       // 404 = no profile yet
@@ -97,6 +100,10 @@ export function useUpsertPregnancy() {
       upsertPregnancy(input as never, userId ?? selfId ?? undefined),
     onSuccess: (_, vars) => {
       void qc.invalidateQueries({ queryKey: qk.pregnancy(vars.userId ?? selfId ?? undefined) });
+      void qc.invalidateQueries({ queryKey: ['pregnancy-tracking'] });
+      void qc.invalidateQueries({ queryKey: ['diet-guidance'] });
+      void qc.invalidateQueries({ queryKey: ['alerts'] });
+      void qc.invalidateQueries({ queryKey: ['education'] });
     },
   });
 }
@@ -106,7 +113,7 @@ export function useHealthMetrics(targetUserId?: string, limit = 100) {
   const selfId = usePatientContext();
   const userId = targetUserId ?? selfId ?? undefined;
   return useQuery({
-    queryKey: qk.metrics(userId),
+    queryKey: [...qk.metrics(userId), limit, useAuthStore(s => s.user?.id)],
     queryFn: () => listHealthMetrics({ page: 1, limit, userId }),
   });
 }
@@ -120,6 +127,7 @@ export function useCreateHealthMetric() {
     onSuccess: (_, vars) => {
       const userId = vars.userId ?? selfId ?? undefined;
       void qc.invalidateQueries({ queryKey: qk.metrics(userId) });
+      void qc.invalidateQueries({ queryKey: ["pregnancy-tracking"] });
     },
   });
 }

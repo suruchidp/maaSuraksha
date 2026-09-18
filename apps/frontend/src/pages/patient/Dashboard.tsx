@@ -67,6 +67,7 @@ export default function PatientDashboardPage() {
         dueDate={pregnancy.data ? formatDate(pregnancy.data.expectedDueDate, lang) : undefined}
       />
 
+      {pregnancy.data && <Card><Link to="/patient/pregnancy" className="font-semibold text-primary-700 underline">{t('tracking.title')}</Link><p className="mt-2">{pregnancy.data.status === 'completed' ? t('tracking.completed_note') : pregnancy.data.datingNeedsReview ? t('tracking.dating_review') : `${pregnancy.data.gestationalWeek} ${t('pregnancy.weeks')}${pregnancy.data.gestationalDays !== undefined ? ` + ${pregnancy.data.gestationalDays} ${t('tracking.days')}` : ''}`}</p></Card>}
       {/* Quick actions */}
       <div>
         <h2 className="section-title mb-3">{t("dashboard.quickActions")}</h2>

@@ -44,6 +44,13 @@ export interface AuthResponse {
 }
 
 export interface PregnancyProfileDTO {
+  gestationalDays?: number;
+  daysToDue?: number;
+  datingNeedsReview?: boolean;
+  asOf?: string;
+  status?: "active" | "completed";
+  endedOn?: string;
+  milestoneCompletions?: {key:string;completedAt:string;completedBy:string}[];
   id: string;
   user: string;
   lmp: string;
@@ -390,3 +397,15 @@ export interface AuditLogDTO {
 
 /* ML service model status (surfaced by backend as pending/message). */
 export type ModelStatus = "MODEL_AVAILABLE" | "MODEL_UNAVAILABLE" | "RULE_BASED";
+export interface PregnancyTrackingDTO {
+ profile: PregnancyProfileDTO;
+ milestones: {key:string;fromWeek:number;toWeek:number;date:string;source:string;state:string;completion?:{key:string;completedAt:string;completedBy:string}}[];
+ metrics: {items:HealthMetricDTO[];total:number;included:number;truncated:boolean};
+ context: {
+ maternal: {status:string;riskLevel?:string;createdAt:string;riskScore?:number}|null;
+ gdm: {status:string;riskLevel?:string;createdAt:string;riskScore?:number}|null;
+ latestSymptom: {date:string;symptoms:string[];severity:string}|null;
+ nextAppointments: {date:string;time:string;type:string;status:string}[];
+ pendingAlerts:number;
+ };
+}

@@ -1,3 +1,4 @@
+import PregnancyPage from "@/pages/patient/Pregnancy";
 import ReportsPage from "@/pages/patient/Reports";
 import AppointmentsPage from "@/pages/patient/Appointments";
 import { useTranslation } from "react-i18next";
@@ -28,6 +29,7 @@ export default function DoctorPatientDetailPage() {
         </Link>
       </div>
       <PatientOverview patient={patient} />
+      <PregnancyPage key={`pregnancy-${patient.id}`} patientId={patient.id} />
       <AppointmentsPage key={patient.id} patientId={patient.id} />
       <ReportsPage key={`reports-${patient.id}`} patientId={patient.id} />
 

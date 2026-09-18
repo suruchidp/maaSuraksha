@@ -1,5 +1,6 @@
+vi.mock("./PregnancyTracking", () => ({ default: () => null }));
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import PregnancyPage from "./Pregnancy";
 import type { PregnancyProfileDTO } from "@/lib/types";
@@ -66,7 +67,10 @@ describe("PregnancyPage", () => {
   beforeEach(() => {
     mocks.usePregnancy.mockReset();
     mocks.useUpsertPregnancy.mockReset();
-    mocks.useUpsertPregnancy.mockReturnValue({ mutate: vi.fn(), isPending: false });
+    mocks.useUpsertPregnancy.mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+    });
   });
 
   it("shows a setup empty state instead of a generic error when no profile exists (404)", () => {
@@ -75,11 +79,11 @@ describe("PregnancyPage", () => {
 
     expect(screen.getByText("No pregnancy profile yet")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Set up pregnancy profile" })
+      screen.getByRole("button", { name: "Set up pregnancy profile" }),
     ).toBeInTheDocument();
     expect(screen.queryByText("Something went wrong")).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Try again" })
+      screen.queryByRole("button", { name: "Try again" }),
     ).not.toBeInTheDocument();
   });
 
@@ -89,16 +93,18 @@ describe("PregnancyPage", () => {
     render(<PregnancyPage />);
 
     expect(
-      screen.queryByLabelText(/Last Menstrual Period/)
+      screen.queryByLabelText(/Last Menstrual Period/),
     ).not.toBeInTheDocument();
 
     await user.click(
-      screen.getByRole("button", { name: "Set up pregnancy profile" })
+      screen.getByRole("button", { name: "Set up pregnancy profile" }),
     );
 
     expect(screen.getByLabelText(/Last Menstrual Period/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
-    expect(screen.queryByText("No pregnancy profile yet")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("No pregnancy profile yet"),
+    ).not.toBeInTheDocument();
   });
 
   it("shows the existing profile and update form for a patient with a saved profile", () => {
@@ -113,9 +119,11 @@ describe("PregnancyPage", () => {
 
     expect(screen.getByText("12 weeks")).toBeInTheDocument();
     expect(screen.getByText("Trimester 1")).toBeInTheDocument();
-    expect(screen.getByText("Low risk")).toBeInTheDocument();
+    expect(screen.getByText("No recorded risk factors")).toBeInTheDocument();
     expect(screen.getByLabelText(/Last Menstrual Period/)).toBeInTheDocument();
-    expect(screen.queryByText("No pregnancy profile yet")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("No pregnancy profile yet"),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("Something went wrong")).not.toBeInTheDocument();
   });
 
@@ -131,7 +139,57 @@ describe("PregnancyPage", () => {
 
     expect(screen.getByText("Something went wrong")).toBeInTheDocument();
     expect(screen.getByText("Internal server error")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
-    expect(screen.queryByText("No pregnancy profile yet")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Try again" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("No pregnancy profile yet"),
+    ).not.toBeInTheDocument();
+  });
+  it("submits the calendar date and existing clinical history from the form", async () => {
+    const mutate = vi.fn();
+    mocks.useUpsertPregnancy.mockReturnValue({ mutate });
+    mocks.usePregnancy.mockReturnValue({
+      data: {
+        ...profile,
+        riskFactors: ["Prior hypertension"],
+        medicalHistory: ["Previous surgery"],
+      },
+    });
+    render(<PregnancyPage patientId="patient2" />);
+    fireEvent.change(screen.getByLabelText(/Last Menstrual Period/), {
+      target: { value: "2026-02-01" },
+    });
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() =>
+      expect(mutate).toHaveBeenCalledWith(
+        {
+          userId: "patient2",
+          input: expect.objectContaining({
+            lmp: "2026-02-01",
+            gravida: 1,
+            para: 0,
+            riskFactors: ["Prior hypertension"],
+            medicalHistory: ["Previous surgery"],
+            status: "active",
+            updatedAt: profile.updatedAt,
+          }),
+        },
+        expect.any(Object),
+      ),
+    );
+  });
+  it("validates pregnancy completion requires an end date", async () => {
+    const mutate = vi.fn();
+    mocks.useUpsertPregnancy.mockReturnValue({ mutate });
+    mocks.usePregnancy.mockReturnValue({ data: profile });
+    render(<PregnancyPage />);
+    await userEvent.selectOptions(
+      screen.getByLabelText("Pregnancy status"),
+      "completed",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(mutate).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent("End date is required");
   });
 });

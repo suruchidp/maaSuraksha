@@ -1,4 +1,4 @@
-import { validAppointmentDate } from "./appointmentTime";
+import { validAppointmentDate, appointmentToday } from "./appointmentTime";
 import { z } from "zod";
 import { UserRole, Language } from "./types";
 import {
@@ -78,12 +78,15 @@ export const symptomSchema = z.object({
 }).refine(v => !v.onset || !v.date || Date.parse(v.onset) <= Date.parse(v.date), { message: "Onset must precede the recorded date", path: ["onset"] });
 
 export const pregnancyProfileSchema = z.object({
-  lmp: z.string().refine((val) => !isNaN(Date.parse(val)), "Invalid date"),
-  gravida: z.number().min(0).max(20).optional(),
-  para: z.number().min(0).max(20).optional(),
-  medicalHistory: z.array(z.string()).optional(),
-  riskFactors: z.array(z.string()).optional(),
-});
+ lmp: z.string().refine(v => validAppointmentDate(v) && v <= appointmentToday(), "LMP must be a valid date that is not in the future"),
+ gravida: z.number().int().min(1).max(20).optional(),
+ para: z.number().int().min(0).max(19).optional(),
+ medicalHistory: z.array(z.string().trim().min(1).max(300)).max(30).optional(),
+ riskFactors: z.array(z.string().trim().min(1).max(300)).max(30).optional(),
+ status: z.enum(["active","completed"]).optional(),
+ endedOn: z.string().refine(v => validAppointmentDate(v) && v <= appointmentToday(), "Invalid or future pregnancy end date").optional(),
+ updatedAt: z.string().datetime().optional(),
+}).strict().refine(v => v.para === undefined || v.gravida === undefined || v.para < v.gravida, { message:"Previous births must be fewer than total pregnancies including the current pregnancy", path:["para"] }).refine(v => v.status !== "completed" || !!v.endedOn, {message:"End date is required for a completed pregnancy",path:["endedOn"]}).refine(v => !v.endedOn || (v.endedOn >= v.lmp && v.status === "completed"), {message:"End date must follow LMP and requires completed status",path:["endedOn"]});
 
 export const moodEntrySchema = z.object({
   journalText: z

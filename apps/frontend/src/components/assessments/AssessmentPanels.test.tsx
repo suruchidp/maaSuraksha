@@ -5,6 +5,7 @@ import { MaternalRiskPanel, GDMPanel, PPDPanel } from "@/components/assessments/
 import { buildSchemas } from "@/lib/schemas";
 
 const mocks = vi.hoisted(() => ({
+  usePregnancy: vi.fn(),
   useMaternalRiskHistory: vi.fn(),
   useCreateMaternalRisk: vi.fn(),
   useGDMHistory: vi.fn(),
@@ -17,6 +18,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/hooks/queries", () => ({
+  usePregnancy: (...a: unknown[]) => mocks.usePregnancy(...a),
   useMaternalRiskHistory: (...a: unknown[]) => mocks.useMaternalRiskHistory(...a),
   useCreateMaternalRisk: (...a: unknown[]) => mocks.useCreateMaternalRisk(...a),
   useGDMHistory: (...a: unknown[]) => mocks.useGDMHistory(...a),
@@ -38,6 +40,7 @@ vi.mock("@/stores/toastStore", () => ({
 }));
 
 function mockDefaults() {
+  mocks.usePregnancy.mockReturnValue({data:{gestationalWeek:12,status:"active"}});
   const emptyHistory = {
     data: { items: [] },
     isLoading: false,
@@ -364,4 +367,18 @@ describe("AssessmentPanels required indicator matrix (live finding)", () => {
     expect(screen.getByText(/Optional\. The early-risk model was trained on data/)).toBeInTheDocument();
     expect(screen.getByText(/training median \(132 mmHg\)/)).toBeInTheDocument();
   });
+});
+describe('Maternal risk pregnancy dating integration',()=>{
+ beforeEach(()=>{mockDefaults();mocks.useCreateMaternalRisk.mockReturnValue({mutate:vi.fn()});});
+ it('prefills the current completed week from pregnancy tracking',()=>{
+  mocks.usePregnancy.mockReturnValue({data:{gestationalWeek:24,gestationalDays:3,status:'active'}});
+  render(<MaternalRiskPanel userId="u1"/>);expect(screen.getByLabelText(/Gestational Week/)).toHaveValue(24);expect(mocks.usePregnancy).toHaveBeenCalledWith('u1');
+ });
+ it('leaves gestational age blank when dating is unavailable or outside model bounds',()=>{
+  mocks.usePregnancy.mockReturnValue({data:{gestationalWeek:57,datingNeedsReview:true,status:'active'}});
+  render(<MaternalRiskPanel userId="u1"/>);expect(screen.getByLabelText(/Gestational Week/)).toHaveValue(null);
+ });
+ it('preserves a user-edited week when the live profile refreshes',async()=>{
+  mocks.usePregnancy.mockReturnValue({data:{gestationalWeek:24,status:'active'}});const view=render(<MaternalRiskPanel userId="u1"/>);const field=screen.getByLabelText(/Gestational Week/);await userEvent.clear(field);await userEvent.type(field,'25');mocks.usePregnancy.mockReturnValue({data:{gestationalWeek:26,status:'active'}});view.rerender(<MaternalRiskPanel userId="u1"/>);expect(field).toHaveValue(25);
+ });
 });

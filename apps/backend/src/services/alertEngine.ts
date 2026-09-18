@@ -1,3 +1,4 @@
+import { pregnancyAge, PREGNANCY_MILESTONES } from "@maasuraksha/shared";
 import { Symptom } from "../models/Symptom";
 import { symptomTriage } from "@maasuraksha/shared";
 import { Alert } from "../models/Alert";
@@ -14,7 +15,7 @@ export interface Signal {
 export interface AlertContext {
  user: string;
  metric?: { _id: unknown; date: Date; systolicBP?: number; diastolicBP?: number } | null;
- pregnancy?: { _id: unknown; expectedDueDate: Date; isHighRisk: boolean } | null;
+ pregnancy?: { _id: unknown; expectedDueDate: Date; isHighRisk: boolean; lmp?: Date; status?: string; milestoneCompletions?: {key:string}[] } | null;
  maternal?: { _id: unknown; status: string; riskLevel?: string } | null;
  gdm?: { _id: unknown; status: string; riskLevel?: string } | null;
  symptoms?: { _id: unknown; date: Date; symptoms: string[]; severity: string }[];
@@ -44,10 +45,16 @@ export function evaluateAlerts(ctx: AlertContext, now = new Date()): Signal[] {
   }
  }
  const pregnancy = ctx.pregnancy;
- if (pregnancy?.isHighRisk) add('pregnancy-risk', 'follow_up', AlertSeverity.WARNING, 'Pregnancy care plan review', 'Your pregnancy profile records risk factors. Review your follow-up plan with your care team.', `pregnancy-risk:${pregnancy._id}`);
- if (pregnancy) {
-  const days = Math.ceil((pregnancy.expectedDueDate.getTime() - now.getTime()) / 86400000);
-  if (days >= 0 && days <= 7) add('due-date', 'follow_up', AlertSeverity.INFO, 'Estimated due date approaching', 'Your estimated due date is within one week. Confirm your birth and contact plan with your care team.', `due:${pregnancy.expectedDueDate.toISOString().slice(0,10)}`);
+ if (pregnancy && pregnancy.status !== 'completed') {
+  const dating = pregnancy.lmp ? pregnancyAge(pregnancy.lmp,now) : undefined;
+  const cycle = `${pregnancy._id}:${pregnancy.lmp?.toISOString().slice(0,10) ?? "legacy"}`;
+  if (pregnancy.isHighRisk) add('pregnancy-risk','follow_up',AlertSeverity.WARNING,'Pregnancy care plan review','Your pregnancy profile records risk factors. Review your follow-up plan with your care team.',`pregnancy-risk:${cycle}`);
+  const days = dating?.daysToDue ?? Math.ceil((pregnancy.expectedDueDate.getTime()-now.getTime())/86400000);
+  if (days>=0 && days<=7) add('due-date','follow_up',AlertSeverity.INFO,'Estimated due date approaching','Your estimated due date is within one week. Confirm your birth and contact plan with your care team.',`due:${cycle}`);
+  if (days<0) add('pregnancy-overdue','follow_up',AlertSeverity.WARNING,'Review your pregnancy dates and care plan','The estimated due date has passed. Contact your care team to review pregnancy dates and next steps. Update the profile if the pregnancy has ended.',`overdue:${cycle}`);
+  if (dating && !dating.datingNeedsReview) for (const m of PREGNANCY_MILESTONES) {
+   if(dating.weeks>=m.fromWeek && dating.weeks<=m.toWeek && !pregnancy.milestoneCompletions?.some(c=>c.key===m.key)) add('pregnancy-milestone','follow_up',AlertSeverity.INFO,'Pregnancy care milestone',`Review ${m.key.replace(/_/g,' ')} with your care team. This is a planning reminder; individual care schedules may differ. See Pregnancy Tracking.`,`milestone:${cycle}:${m.key}`);
+  }
  }
  for (const appointment of ctx.appointments ?? []) {
   const time = new Date(`${appointment.date.toISOString().slice(0,10)}T${appointment.time}:00+05:30`);
@@ -72,10 +79,15 @@ export async function refreshPatientAlerts(user: string, now = new Date()) {
  for (const signal of evaluateAlerts({ user, metric, pregnancy, maternal, gdm, appointments, symptoms }, now)) {
   try {
    await Alert.updateOne({ user, dedupeKey: signal.key }, { $setOnInsert: { user, dedupeKey: signal.key, type: signal.type, severity: signal.severity, title: signal.title, message: signal.message, source: `rules-v1:${signal.rule}` } }, { upsert: true });
+   await Alert.updateOne({user,dedupeKey:signal.key,status:'resolved',resolvedByEngine:true},{$set:{status:'pending',resolvedByEngine:false},$unset:{readAt:1}});
   } catch (error) {
    if ((error as { code?: number }).code !== 11000) throw error;
   }
  }
+ // Re-read the profile so an older concurrent snapshot cannot resolve newer reminders.
+ const currentPregnancy = await PregnancyProfile.findOne({user});
+ const currentKeys = evaluateAlerts({user,pregnancy:currentPregnancy},now).map(s=>s.key);
+ await Alert.updateMany({user,source:{$in:['rules-v1:due-date','rules-v1:pregnancy-risk','rules-v1:pregnancy-overdue','rules-v1:pregnancy-milestone']},status:{$ne:'resolved'},dedupeKey:{$nin:currentKeys}},{$set:{status:'resolved',readAt:now,resolvedByEngine:true}});
  // Read schedules again after generation. A concurrent refresh with an older
  // snapshot must never resolve a reminder belonging to a newer schedule.
  const currentBookings = await Appointment.find({ patient: user }).select('_id status scheduleVersion');

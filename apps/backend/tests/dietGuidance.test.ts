@@ -297,7 +297,7 @@ describe("diet guidance engine — persistence (snapshot semantics)", () => {
     const userId = new mongoose.Types.ObjectId();
     await PregnancyProfile.create({
       user: userId,
-      lmp: new Date("2026-01-01"),
+      lmp: new Date(Date.now() - 24 * 7 * 86400000),
       expectedDueDate: new Date("2026-09-01"),
       gestationalWeek: 24,
       trimester: 2,
@@ -324,7 +324,7 @@ describe("diet guidance engine — persistence (snapshot semantics)", () => {
     const userId = new mongoose.Types.ObjectId();
     await PregnancyProfile.create({
       user: userId,
-      lmp: new Date("2026-01-01"),
+      lmp: new Date(Date.now() - 24 * 7 * 86400000),
       expectedDueDate: new Date("2026-09-01"),
       gestationalWeek: 24,
       trimester: 2,
@@ -399,7 +399,7 @@ describe("diet guidance engine — persistence (snapshot semantics)", () => {
     const userId = new mongoose.Types.ObjectId();
     await PregnancyProfile.create({
       user: userId,
-      lmp: new Date("2026-01-01"),
+      lmp: new Date(Date.now() - 24 * 7 * 86400000),
       expectedDueDate: new Date("2026-09-01"),
       gestationalWeek: 20,
       trimester: 2,

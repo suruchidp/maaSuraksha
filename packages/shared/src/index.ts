@@ -74,3 +74,5 @@ export { appointmentStart, appointmentToday, validAppointmentDate, APPOINTMENT_T
 
 export { healthRecordSchema } from "./validations";
 export type { HealthRecordInput } from "./validations";
+
+export { pregnancyAge, PREGNANCY_MILESTONES } from "./pregnancyTime";

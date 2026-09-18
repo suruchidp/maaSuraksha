@@ -1,8 +1,10 @@
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuthStore } from "@/stores/authStore";
 import {
+  usePregnancy,
   useCreateMaternalRisk,
   useCreateGDM,
   useCreatePPD,
@@ -101,6 +103,9 @@ export function MaternalRiskPanel({ userId }: { userId: string }) {
   const push = useToastStore((s) => s.push);
   const schemas = buildSchemas(t);
 
+  const pregnancy = usePregnancy(userId);
+  const profile = pregnancy.data;
+  const datedWeek = profile && profile.status !== 'completed' && !profile.datingNeedsReview && profile.gestationalWeek >= 1 && profile.gestationalWeek <= 42 ? profile.gestationalWeek : undefined;
   const history = useMaternalRiskHistory(userId, 10);
   const create = useCreateMaternalRisk();
 
@@ -116,13 +121,18 @@ export function MaternalRiskPanel({ userId }: { userId: string }) {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    resetField,
+    formState: { errors, dirtyFields },
   } = useForm<MaternalForm>({
     resolver: zodResolver(schemas.maternalRisk),
     /* `user` is validated by schemas.maternalRisk but has no input in this
        form; seed it from the prop so handleSubmit's resolver accepts it. */
-    defaultValues: { user: userId, age: 25, gestationalWeek: 12, bmi: 22 },
+    defaultValues: { user: userId, age: 25, gestationalWeek: datedWeek, bmi: 22 },
   });
+
+  useEffect(() => {
+    if (!dirtyFields.gestationalWeek) resetField('gestationalWeek', { defaultValue: datedWeek });
+  }, [datedWeek, dirtyFields.gestationalWeek, resetField]);
 
   const onSubmit = (data: MaternalForm) => {
     create.mutate(

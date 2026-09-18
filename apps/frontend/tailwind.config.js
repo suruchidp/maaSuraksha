@@ -3,11 +3,14 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 
 export default {
-  content: [
+  content: {
+    relative: true,
+    files: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
     "./node_modules/@maasuraksha/shared/src/**/*.{js,ts,tsx}",
-  ],
+    ],
+  },
   theme: {
     extend: {
       colors: {

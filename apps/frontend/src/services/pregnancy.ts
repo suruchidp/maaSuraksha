@@ -1,4 +1,4 @@
-import { httpGet, httpPost, httpList } from "@/lib/api";
+import { httpGet, httpPost, httpList, httpPatch } from "@/lib/api";
 import { PregnancyProfileDTO } from "@/lib/types";
 import type { PregnancyProfileInput } from "@maasuraksha/shared";
 
@@ -23,3 +23,5 @@ export async function upsertPregnancy(
 export async function listPregnancies(params: Record<string, unknown>) {
   return httpList<PregnancyProfileDTO>("/pregnancy", params);
 }
+export const getPregnancyTracking = (userId?:string) => httpGet<import('@/lib/types').PregnancyTrackingDTO>('/pregnancy/tracking',{userId});
+export const updatePregnancyMilestone = (key:string, completed:boolean, updatedAt:string, userId?:string) => httpPatch<PregnancyProfileDTO>(`/pregnancy/milestones/${key}${userId ? `?userId=${encodeURIComponent(userId)}` : ''}`,{completed,updatedAt});

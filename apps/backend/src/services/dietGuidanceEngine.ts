@@ -1,3 +1,4 @@
+import { pregnancyAge } from "@maasuraksha/shared";
 import { MaternalRiskAssessment } from "../models/MaternalRiskAssessment";
 import { GDMAssessment } from "../models/GDMAssessment";
 import { PregnancyProfile } from "../models/PregnancyProfile";
@@ -406,8 +407,8 @@ export async function buildDietContext(userId: string): Promise<DietGuidanceCont
     },
   };
 
-  if (profile) {
-    ctx.trimester = (profile.trimester as 1 | 2 | 3 | undefined) ?? undefined;
+  if (profile && profile.status !== "completed" && !pregnancyAge(profile.lmp).datingNeedsReview) {
+    ctx.trimester = pregnancyAge(profile.lmp).trimester;
     ctx.isHighRisk = profile.isHighRisk ?? false;
   }
 

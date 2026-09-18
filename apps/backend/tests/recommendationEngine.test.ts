@@ -277,7 +277,7 @@ describe("recommendation engine — persistence", () => {
     const userId = new mongoose.Types.ObjectId();
     await PregnancyProfile.create({
       user: userId,
-      lmp: new Date("2026-01-01"),
+      lmp: new Date(Date.now() - 24 * 7 * 86400000),
       expectedDueDate: new Date("2026-09-01"),
       gestationalWeek: 22,
       trimester: 2,

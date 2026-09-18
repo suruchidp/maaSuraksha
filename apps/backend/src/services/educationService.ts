@@ -1,3 +1,4 @@
+import { pregnancyAge } from "@maasuraksha/shared";
 import { isValidObjectId } from 'mongoose';
 import { EducationalContent } from '../models/EducationalContent';
 import { EducationProgress } from '../models/EducationProgress';
@@ -41,9 +42,9 @@ export async function listContent(page:number,limit:number,category?:string,lang
   if(options.view==='saved') filter._id={$in:(await EducationProgress.find({user,isSaved:true}).select('content')).map(p=>p.content)};
   else {
    const [profile,maternal,gdm]=await Promise.all([PregnancyProfile.findOne({user}),MaternalRiskAssessment.findOne({user}).sort({createdAt:-1}),GDMAssessment.findOne({user}).sort({createdAt:-1})]);
-   if(profile) {
-    const week=Math.floor((Date.now()-profile.lmp.getTime())/604800000)+1;
-    if(week>=1 && week<=42) stageTag='trimester_'+(week<=13?1:week<=26?2:3);
+   if(profile && profile.status !== 'completed') {
+    const age=pregnancyAge(profile.lmp);
+    if(!age.datingNeedsReview) stageTag='trimester_'+age.trimester;
    }
    risk=!!profile?.isHighRisk || [maternal,gdm].some(a=>a?.status==='completed' && ['high','critical','medium','moderate'].includes(a.riskLevel ?? ''));
    filter.tags={$in:['general',...(stageTag?[stageTag]:[]),...(risk?['risk_followup']:[])]};

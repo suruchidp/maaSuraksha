@@ -12,6 +12,9 @@ export interface IPregnancyProfileDocument extends Document {
   isHighRisk: boolean;
   riskFactors: string[];
   medicalHistory: string[];
+  status: "active" | "completed";
+  endedOn?: Date;
+  milestoneCompletions: { key: string; completedAt: Date; completedBy: mongoose.Types.ObjectId }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,6 +27,9 @@ const pregnancyProfileSchema = new Schema<IPregnancyProfileDocument>(
       required: true,
       unique: true,
     },
+    status: { type: String, enum: ["active", "completed"], default: "active" },
+    endedOn: Date,
+    milestoneCompletions: [{ _id: false, key: String, completedAt: Date, completedBy: { type: Schema.Types.ObjectId, ref: "User" } }],
     lmp: { type: Date, required: true },
     expectedDueDate: { type: Date, required: true },
     gestationalWeek: {

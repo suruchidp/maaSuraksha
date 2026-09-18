@@ -1,3 +1,4 @@
+import { pregnancyAge } from "@maasuraksha/shared";
 import { MaternalRiskAssessment } from "../models/MaternalRiskAssessment";
 import { GDMAssessment } from "../models/GDMAssessment";
 import { PPDAssessment } from "../models/PPDAssessment";
@@ -285,8 +286,8 @@ export async function buildContext(userId: string): Promise<EngineContext> {
 
   const ctx: EngineContext = { user: userId };
 
-  if (profile) {
-    ctx.trimester = profile.trimester;
+  if (profile && profile.status !== "completed" && !pregnancyAge(profile.lmp).datingNeedsReview) {
+    ctx.trimester = pregnancyAge(profile.lmp).trimester;
     ctx.isHighRisk = profile.isHighRisk ?? false;
   }
 
