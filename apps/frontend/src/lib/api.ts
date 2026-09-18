@@ -87,9 +87,10 @@ function unwrap<T>(response: { data: ApiEnvelope<T> }): T {
 
 export async function httpGet<T>(
   url: string,
-  params?: Record<string, unknown>
+  params?: Record<string, unknown>,
+  config?: AxiosRequestConfig
 ): Promise<T> {
-  const response = await apiClient.get<ApiEnvelope<T>>(url, { params });
+  const response = await apiClient.get<ApiEnvelope<T>>(url, { ...config, params });
   return unwrap(response);
 }
 

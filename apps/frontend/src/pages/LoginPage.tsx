@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,8 +22,6 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const setAuth = useAuthStore((s) => s.setAuth);
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const sessionUser = useAuthStore((s) => s.user);
   const push = useToastStore((s) => s.push);
   const schemas = buildSchemas(t);
 
@@ -38,10 +36,6 @@ export default function LoginPage() {
   useEffect(() => {
     document.title = `${t("auth.loginTitle")} - ${t("app.name")}`;
   }, [t, i18n.language]);
-
-  if (isAuthenticated && sessionUser) {
-    return <Navigate to={`/${sessionUser.role.toLowerCase()}/dashboard`} replace />;
-  }
 
   const loginMutation = useMutation({
     mutationFn: ({ email, password }: LoginForm) => login(email, password),
@@ -93,6 +87,7 @@ export default function LoginPage() {
             <Field label={t("auth.password")} htmlFor="password" error={errors.password?.message}>
               <Input id="password" type="password" autoComplete="current-password" {...register("password")} />
             </Field>
+            {loginMutation.isError && <p role="alert" className="text-sm text-red-700">{getApiErrorMessage(loginMutation.error)}</p>}
             <Button type="submit" fullWidth loading={loginMutation.isPending}>
               {t("auth.loginButton")}
             </Button>
