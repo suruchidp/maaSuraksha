@@ -24,3 +24,4 @@ export async function updateAppointmentStatus(
     cancelledReason,
   });
 }
+export async function rescheduleAppointment(id: string, input: { date: string; time: string }) { return httpPatch<AppointmentDTO>(`/appointments/${id}/schedule`, input); }

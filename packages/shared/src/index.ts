@@ -70,3 +70,4 @@ export type {
 } from "./validations";
 
 export { symptomTriage } from "./symptomTriage";
+export { appointmentStart, appointmentToday, validAppointmentDate, APPOINTMENT_TIME_ZONE } from "./appointmentTime";

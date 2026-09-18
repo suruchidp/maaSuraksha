@@ -663,7 +663,32 @@
     "myAppointments": "My Appointments",
     "cancel": "Cancel",
     "cancelConfirmTitle": "Cancel this appointment?",
-    "cancelConfirmMessage": "The appointment will be cancelled. You can book a new time anytime."
+    "cancelConfirmMessage": "The appointment will be cancelled. You can book a new time anytime.",
+    "workflow": {
+      "help": "Dates and times use India time (IST, UTC+05:30). Bookings are requests until confirmed by your care team. Your assigned doctor/ASHA is attached automatically. Reminders appear in Alerts within 24 hours of the appointment.",
+      "view": "Appointment view",
+      "upcoming": "Upcoming",
+      "past": "Past & history",
+      "all": "All",
+      "statusFilter": "Filter by appointment status",
+      "allStatuses": "All statuses",
+      "indiaTime": "India time (IST)",
+      "doctor": "Doctor",
+      "asha": "ASHA",
+      "unassigned": "Not assigned",
+      "reason": "Cancellation reason (optional)",
+      "reschedule": "Reschedule",
+      "reconfirm": "Changing the date or time returns the appointment to Scheduled and requires care-team confirmation.",
+      "saveSchedule": "Save new time",
+      "rescheduled": "Appointment rescheduled",
+      "confirm": "Confirm",
+      "complete": "Complete",
+      "missed": "Mark missed",
+      "updated": "Appointment updated",
+      "patient": "Choose patient",
+      "patientSearch": "Search patients",
+      "choosePatient": "Select a patient to manage appointments"
+    }
   },
   "referrals": {
     "title": "Referrals",

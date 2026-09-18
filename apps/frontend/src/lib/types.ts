@@ -290,6 +290,11 @@ export interface ReferralDTO {
 }
 
 export interface AppointmentDTO {
+  doctorName?: string;
+  ashaName?: string;
+  startsAt?: string;
+  timeZone?: string;
+  scheduleVersion?: number;
   id: string;
   patient: string;
   doctor?: string;

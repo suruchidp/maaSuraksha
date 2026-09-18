@@ -1,3 +1,4 @@
+import AdminAppointmentsPage from "@/pages/admin/Appointments";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { UserRole } from "@maasuraksha/shared";
@@ -116,6 +117,7 @@ export default function App() {
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<AdminDashboardPage />} />
                 <Route path="users" element={<AdminUsersPage />} />
+                <Route path="appointments" element={<AdminAppointmentsPage />} />
                 <Route path="education" element={<AdminEducationPage />} />
                 <Route path="audit-logs" element={<AdminAuditLogsPage />} />
               </Route>

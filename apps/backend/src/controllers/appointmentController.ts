@@ -1,3 +1,6 @@
+import { z } from "zod";
+import { ApiError } from "../utils/ApiError";
+const listQuery = z.object({ patientId: z.string().optional(), status: z.string().optional(), view: z.enum(["all", "upcoming", "past"]).optional() }).passthrough();
 import { Response } from "express";
 import { AuthRequest } from "../middleware/auth";
 import { asyncHandler } from "../utils/asyncHandler";
@@ -8,6 +11,7 @@ import {
   listAppointments,
   getAppointment,
   updateAppointmentStatus,
+  rescheduleAppointment,
 } from "../services/appointmentService";
 
 export const createController = asyncHandler(
@@ -20,9 +24,10 @@ export const createController = asyncHandler(
 export const listController = asyncHandler(
   async (req: AuthRequest, res: Response) => {
     const { page, limit } = parsePagination(req.query);
-    const patientId = req.query.patientId as string | undefined;
-    const status = req.query.status as string | undefined;
-    const result = await listAppointments(req.user!, patientId, page, limit, status);
+    const parsed = listQuery.safeParse(req.query);
+    if (!parsed.success) throw ApiError.badRequest("Invalid appointment query");
+    const { patientId, status, view } = parsed.data;
+    const result = await listAppointments(req.user!, patientId, page, limit, status, view);
     sendSuccess(res, result.items, 200, buildPaginationMeta(page, limit, result.total));
   }
 );
@@ -45,3 +50,4 @@ export const updateStatusController = asyncHandler(
     sendSuccess(res, appointment);
   }
 );
+export const rescheduleController = asyncHandler(async (req: AuthRequest, res: Response) => { sendSuccess(res, await rescheduleAppointment(req.user!, req.params.id as string, req.body)); });

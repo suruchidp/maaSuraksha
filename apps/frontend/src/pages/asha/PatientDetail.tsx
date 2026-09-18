@@ -1,3 +1,4 @@
+import AppointmentsPage from "@/pages/patient/Appointments";
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -25,6 +26,7 @@ export default function ASHAPatientDetailPage() {
         </Link>
       </div>
       <PatientOverview patient={patient} />
+      <AppointmentsPage key={patient.id} patientId={patient.id} />
       <ASHAActionForms patientId={patient.id} />
     </div>
   );

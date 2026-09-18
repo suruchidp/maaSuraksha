@@ -18,7 +18,7 @@ export interface AlertContext {
  maternal?: { _id: unknown; status: string; riskLevel?: string } | null;
  gdm?: { _id: unknown; status: string; riskLevel?: string } | null;
  symptoms?: { _id: unknown; date: Date; symptoms: string[]; severity: string }[];
- appointments?: { _id: unknown; date: Date; time: string; status: string }[];
+ appointments?: { _id: unknown; date: Date; time: string; status: string; scheduleVersion?: number }[];
 }
 export function evaluateAlerts(ctx: AlertContext, now = new Date()): Signal[] {
  const signals: Signal[] = [];
@@ -52,7 +52,7 @@ export function evaluateAlerts(ctx: AlertContext, now = new Date()): Signal[] {
  for (const appointment of ctx.appointments ?? []) {
   const time = new Date(`${appointment.date.toISOString().slice(0,10)}T${appointment.time}:00+05:30`);
   const remaining = time.getTime() - now.getTime();
-  if (['scheduled','confirmed'].includes(appointment.status) && remaining >= 0 && remaining <= 86400000) add('appointment-reminder', 'appointment', AlertSeverity.INFO, 'Upcoming appointment', `Your appointment is on ${appointment.date.toISOString().slice(0,10)} at ${appointment.time} (India time). Check Appointments for details.`, `appointment:${appointment._id}`);
+  if (['scheduled','confirmed'].includes(appointment.status) && remaining >= 0 && remaining <= 86400000) add('appointment-reminder', 'appointment', AlertSeverity.INFO, 'Upcoming appointment', `Your appointment is on ${appointment.date.toISOString().slice(0,10)} at ${appointment.time} (India time). Check Appointments for details.`, `appointment:${appointment._id}${appointment.scheduleVersion ? `:v${appointment.scheduleVersion}` : ""}`);
  }
  for (const symptom of ctx.symptoms ?? []) {
   const age = now.getTime() - symptom.date.getTime();
@@ -63,14 +63,12 @@ export function evaluateAlerts(ctx: AlertContext, now = new Date()): Signal[] {
  return signals;
 }
 export async function refreshPatientAlerts(user: string, now = new Date()) {
- const [metric, pregnancy, maternal, gdm, appointments, cancelled, symptoms] = await Promise.all([
+ const [metric, pregnancy, maternal, gdm, appointments, symptoms] = await Promise.all([
   HealthMetric.findOne({ user }).sort({ date: -1 }), PregnancyProfile.findOne({ user }),
   MaternalRiskAssessment.findOne({ user }).sort({ createdAt: -1 }), GDMAssessment.findOne({ user }).sort({ createdAt: -1 }),
   Appointment.find({ patient: user, status: { $in: ['scheduled','confirmed'] }, date: { $gte: new Date(now.getTime()-86400000), $lte: new Date(now.getTime()+2*86400000) } }),
-  Appointment.find({ patient: user, status: 'cancelled' }).select('_id'),
   Symptom.find({ user, date: { $gte: new Date(now.getTime()-86400000), $lte: now } })
  ]);
- if (cancelled.length) await Alert.updateMany({ user, source: 'rules-v1:appointment-reminder', status: { $ne: 'resolved' }, dedupeKey: { $in: cancelled.map(item => 'appointment:' + item._id) } }, { $set: { status: 'resolved', readAt: now } });
  for (const signal of evaluateAlerts({ user, metric, pregnancy, maternal, gdm, appointments, symptoms }, now)) {
   try {
    await Alert.updateOne({ user, dedupeKey: signal.key }, { $setOnInsert: { user, dedupeKey: signal.key, type: signal.type, severity: signal.severity, title: signal.title, message: signal.message, source: `rules-v1:${signal.rule}` } }, { upsert: true });
@@ -78,6 +76,14 @@ export async function refreshPatientAlerts(user: string, now = new Date()) {
    if ((error as { code?: number }).code !== 11000) throw error;
   }
  }
+ // Read schedules again after generation. A concurrent refresh with an older
+ // snapshot must never resolve a reminder belonging to a newer schedule.
+ const currentBookings = await Appointment.find({ patient: user }).select('_id status scheduleVersion');
+ for (const item of currentBookings) {
+  const storedVersion = { $convert: { input: { $arrayElemAt: [{ $split: ["$dedupeKey", ":v"] }, 1] }, to: "int", onError: 0, onNull: 0 } };
+  await Alert.updateMany({ user, source: 'rules-v1:appointment-reminder', status: { $ne: 'resolved' }, dedupeKey: { $regex: `^appointment:${item._id}(?::|$)` }, ...(['scheduled','confirmed'].includes(item.status) ? { $expr: { $lt: [storedVersion, item.scheduleVersion ?? 0] } } : {}) }, { $set: { status: 'resolved', readAt: now } });
+ }
+
 }
 
 // Source writes already succeeded. A notification failure must not report the source as unsaved.

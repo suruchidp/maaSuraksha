@@ -29,7 +29,7 @@ import {
 } from "@/services/dietGuidance";
 import { createAlert, listAlerts, updateAlertStatus } from "@/services/alerts";
 import { createReferral, listReferrals, updateReferralStatus } from "@/services/referrals";
-import { createAppointment, listAppointments, updateAppointmentStatus } from "@/services/appointments";
+import { createAppointment, listAppointments, updateAppointmentStatus, rescheduleAppointment } from "@/services/appointments";
 import { listEducation } from "@/services/education";
 import {
   createConversation,
@@ -388,10 +388,13 @@ export function useUpdateReferralStatus() {
 }
 
 /* ---- Appointments ---- */
-export function useAppointments(patientId?: string, limit = 50, page = 1) {
+export function useAppointments(patientId?: string, limit = 50, page = 1, view = "all", status?: string) {
+  const actorId = useAuthStore(s => s.user?.id);
   return useQuery({
-    queryKey: [...qk.appointments(patientId), { limit, page }],
-    queryFn: () => listAppointments({ page, limit, patientId }),
+    queryKey: [...qk.appointments(patientId), { limit, page, view, status }, actorId],
+    enabled: !!actorId,
+    refetchInterval: 30000,
+    queryFn: () => listAppointments({ page, limit, patientId, view, status }),
   });
 }
 
@@ -401,6 +404,7 @@ export function useCreateAppointment() {
     mutationFn: (input: unknown) => createAppointment(input as never),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["appointments"] });
+      void qc.invalidateQueries({ queryKey: ["alerts"] });
     },
   });
 }
@@ -412,8 +416,14 @@ export function useUpdateAppointmentStatus() {
       updateAppointmentStatus(id, status as never, reason),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["appointments"] });
+      void qc.invalidateQueries({ queryKey: ["alerts"] });
     },
   });
+}
+
+export function useRescheduleAppointment() {
+ const qc = useQueryClient();
+ return useMutation({ mutationFn: ({ id, date, time }: { id: string; date: string; time: string }) => rescheduleAppointment(id, { date, time }), onSuccess: () => { void qc.invalidateQueries({ queryKey: ["appointments"] }); void qc.invalidateQueries({ queryKey: ["alerts"] }); } });
 }
 
 /* ---- Education ---- */
@@ -429,8 +439,10 @@ export function useEducation(params?: Record<string, unknown>) {
 
 /* ---- Patients (ASHA/DOCTOR/ADMIN) ---- */
 export function usePatients(search?: string, limit = 100) {
+  const actorId = useAuthStore(s => s.user?.id);
   return useQuery({
-    queryKey: qk.patients(search),
+    queryKey: [...qk.patients(search), limit, actorId],
+    enabled: !!actorId,
     queryFn: () => import("@/services/patients").then((m) => m.listAccessiblePatients({ limit, search })),
   });
 }

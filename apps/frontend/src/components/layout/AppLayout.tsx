@@ -61,6 +61,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/doctor/dashboard", labelKey: "nav.dashboard", icon: <LayoutDashboard className="w-5 h-5" />, roles: ["DOCTOR" as UserRole] },
   { to: "/doctor/patients", labelKey: "nav.patients", icon: <Stethoscope className="w-5 h-5" />, roles: ["DOCTOR" as UserRole] },
   { to: "/admin/dashboard", labelKey: "nav.systemOverview", icon: <LayoutDashboard className="w-5 h-5" />, roles: ["ADMIN" as UserRole] },
+  { to: "/admin/appointments", labelKey: "nav.appointments", icon: <Calendar className="w-5 h-5" />, roles: ["ADMIN" as UserRole] },
   { to: "/admin/users", labelKey: "nav.userManagement", icon: <Users className="w-5 h-5" />, roles: ["ADMIN" as UserRole] },
   { to: "/admin/education", labelKey: "nav.educationalContent", icon: <BookOpen className="w-5 h-5" />, roles: ["ADMIN" as UserRole] },
   { to: "/admin/audit-logs", labelKey: "nav.auditLogs", icon: <FileText className="w-5 h-5" />, roles: ["ADMIN" as UserRole] },

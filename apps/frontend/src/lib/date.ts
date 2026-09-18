@@ -59,3 +59,10 @@ export function addDays(date: Date, days: number): Date {
 export function daysBetween(from: Date, to: Date): number {
   return Math.round((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24));
 }
+
+/** A stored calendar date must not shift with the browser's timezone. */
+export function formatCalendarDate(date: string, language: Language = Language.EN): string {
+  const parsed = new Date(date);
+  if (isNaN(parsed.getTime())) return "—";
+  return new Intl.DateTimeFormat(localeFor(language), { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(parsed);
+}

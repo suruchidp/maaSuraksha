@@ -1,197 +1,99 @@
-import { refreshAlertsAfterWrite } from "./alertEngine";
 import { isValidObjectId } from "mongoose";
+import { appointmentSchema, appointmentStart, AppointmentStatus, APPOINTMENT_TIME_ZONE } from "@maasuraksha/shared";
+import type { AppointmentInput } from "@maasuraksha/shared";
 import { Appointment } from "../models/Appointment";
+import { User } from "../models/User";
 import { ApiError } from "../utils/ApiError";
 import { getAccessiblePatientIds } from "./accessService";
 import { AuthUser } from "../middleware/auth";
-import { AppointmentStatus } from "@maasuraksha/shared";
-import { User } from "../models/User";
+import { refreshAlertsAfterWrite } from "./alertEngine";
 
-export interface AppointmentInput {
-  patient: string;
-  doctor?: string;
-  asha?: string;
-  date: string;
-  time: string;
-  type: string;
-  notes?: string;
-}
-
+const active = [AppointmentStatus.SCHEDULED, AppointmentStatus.CONFIRMED];
 export async function createAppointment(actor: AuthUser, input: AppointmentInput) {
-  validateId(input.patient);
-  if (input.doctor) validateId(input.doctor);
-  if (input.asha) validateId(input.asha);
-
+  const parsed = appointmentSchema.safeParse(input);
+  if (!parsed.success) throw ApiError.badRequest(parsed.error.issues[0].message);
+  input = parsed.data;
   const allowed = await getAccessiblePatientIds(actor);
-  if (actor.role === "PATIENT" && input.patient !== actor.userId) {
-    throw ApiError.forbidden("You can only book appointments for yourself");
-  }
-  if (actor.role !== "ADMIN" && !allowed.has(input.patient)) {
-    throw ApiError.forbidden("You do not have access to this patient's data");
-  }
-
+  if (actor.role !== "ADMIN" && !allowed.has(input.patient)) throw ApiError.forbidden("You do not have access to this patient");
   const patient = await User.findOne({ _id: input.patient, role: "PATIENT", isActive: true });
   if (!patient) throw ApiError.notFound("Patient not found");
-  const date = new Date(input.date);
-  const today = new Date();
-  const todayDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) < todayDate) {
-    throw ApiError.badRequest("Choose today or a future appointment date");
-  }
-  const doctor = actor.role === "PATIENT" ? patient.assignedDoctor?.toString() : input.doctor ?? patient.assignedDoctor?.toString();
-  const asha = actor.role === "PATIENT" ? patient.assignedASHA?.toString() : input.asha ?? (actor.role === "ASHA" ? actor.userId : patient.assignedASHA?.toString());
+  assertFuture(input.date, input.time);
+  const doctor = input.doctor ?? patient.assignedDoctor?.toString();
+  const asha = input.asha ?? patient.assignedASHA?.toString();
+  if (actor.role !== "ADMIN" && ((input.doctor && input.doctor !== patient.assignedDoctor?.toString()) || (input.asha && input.asha !== patient.assignedASHA?.toString()))) throw ApiError.forbidden("Appointments must use the patient's assigned care team");
   for (const [id, role] of [[doctor, "DOCTOR"], [asha, "ASHA"]] as const) {
-    if (id && !(await User.exists({ _id: id, role, isActive: true }))) {
-      throw ApiError.badRequest(`Assigned ${role.toLowerCase()} is unavailable`);
-    }
+    if (id && !await User.exists({ _id: id, role, isActive: true })) throw ApiError.badRequest(`Assigned ${role.toLowerCase()} is unavailable`);
   }
-
-  const appointment = await Appointment.create({
-    patient: input.patient,
-    doctor,
-    asha,
-    date,
-    time: input.time,
-    type: input.type,
-    notes: input.notes,
-  });
-
+  const a = await Appointment.create({ ...input, doctor, asha, date: new Date(`${input.date}T00:00:00Z`) });
   await refreshAlertsAfterWrite(input.patient);
-  return toDto(appointment);
+  return toDto(a);
 }
 
-export async function listAppointments(
-  actor: AuthUser,
-  targetPatientId: string | undefined,
-  page: number,
-  limit: number,
-  status?: string
-) {
+export async function listAppointments(actor: AuthUser, patientId: string | undefined, page: number, limit: number, status?: string, view = "all") {
+  if (patientId) validateId(patientId);
+  if (!['all', 'upcoming', 'past'].includes(view)) throw ApiError.badRequest("Invalid appointment view");
+  if (status && !Object.values(AppointmentStatus).includes(status as AppointmentStatus)) throw ApiError.badRequest("Invalid appointment status");
   const allowed = await getAccessiblePatientIds(actor);
-  let filter: Record<string, unknown>;
-
-  if (actor.role === "PATIENT") {
-    filter = { patient: actor.userId };
-  } else if (targetPatientId) {
-    if (actor.role !== "ADMIN" && !allowed.has(targetPatientId)) {
-      throw ApiError.forbidden("You do not have access to this patient's data");
-    }
-    filter = { patient: targetPatientId };
-  } else if (actor.role === "ADMIN") {
-    filter = {};
-  } else {
-    filter = { patient: { $in: Array.from(allowed) } };
-  }
-
-  if (status) {
-    if (!Object.values(AppointmentStatus).includes(status as AppointmentStatus)) {
-      throw ApiError.badRequest("Invalid appointment status");
-    }
-    filter.status = status;
-  }
-
+  if (patientId && actor.role !== "ADMIN" && !allowed.has(patientId)) throw ApiError.forbidden("You do not have access to this patient");
+  const assignment = actor.role === "DOCTOR" ? { doctor: actor.userId } : { asha: actor.userId };
+  const filter: Record<string, unknown> = actor.role === "ADMIN" ? {} : actor.role === "PATIENT" ? { patient: actor.userId } : { $or: [{ patient: { $in: [...allowed] } }, assignment] };
+  if (patientId) filter.patient = patientId;
+  if (status) filter.status = status;
+  // Compute legacy records from their original date and India-time fields.
+  const start = { $dateFromString: { dateString: { $concat: [{ $dateToString: { date: "$date", format: "%Y-%m-%d", timezone: "UTC" } }, "T", "$time", ":00+05:30"] }, onError: null, onNull: null } };
+  if (view === "upcoming") filter.$expr = { $and: [{ $gte: [start, new Date()] }, { $in: ["$status", active] }] };
+  if (view === "past") filter.$expr = { $or: [{ $lt: [start, new Date()] }, { $not: [{ $in: ["$status", active] }] }] };
   const total = await Appointment.countDocuments(filter);
-  const items = await Appointment.find(filter)
-    .sort({ date: -1 })
-    .skip((page - 1) * limit)
-    .limit(limit);
-
-  return { items: items.map(toDto), total };
+  const items = await Appointment.find(filter).sort({ date: view === "upcoming" ? 1 : -1, time: view === "upcoming" ? 1 : -1, _id: -1 }).skip((page-1)*limit).limit(limit);
+  return { items: await Promise.all(items.map(toDto)), total };
 }
 
-export async function getAppointment(actor: AuthUser, appointmentId: string) {
-  validateId(appointmentId);
+async function accessibleAppointment(actor: AuthUser, id: string) {
+  validateId(id);
+  const a = await Appointment.findById(id);
+  if (!a) throw ApiError.notFound("Appointment not found");
   const allowed = await getAccessiblePatientIds(actor);
-  const appointment = await Appointment.findById(appointmentId);
-  if (!appointment) throw ApiError.notFound("Appointment not found");
+  const assigned = (actor.role === "DOCTOR" && a.doctor?.toString() === actor.userId) || (actor.role === "ASHA" && a.asha?.toString() === actor.userId);
+  if (actor.role !== "ADMIN" && !allowed.has(a.patient.toString()) && !assigned) throw ApiError.forbidden("You do not have access to this appointment");
+  return a;
+}
+export async function getAppointment(actor: AuthUser, id: string) { return toDto(await accessibleAppointment(actor, id)); }
 
-  const isRelatedDoctor =
-    actor.role === "DOCTOR" && appointment.doctor?.toString() === actor.userId;
-  const isRelatedAsha =
-    actor.role === "ASHA" && allowed.has(appointment.patient.toString());
-  const isRelatedPatient =
-    actor.role === "PATIENT" && appointment.patient.toString() === actor.userId;
-  const isAssignedDoctor =
-    actor.role === "DOCTOR" && allowed.has(appointment.patient.toString());
-
-  if (
-    actor.role !== "ADMIN" &&
-    !isRelatedDoctor &&
-    !isRelatedAsha &&
-    !isRelatedPatient &&
-    !isAssignedDoctor
-  ) {
-    throw ApiError.forbidden("You do not have access to this appointment");
-  }
-  return toDto(appointment);
+export async function updateAppointmentStatus(actor: AuthUser, id: string, status: AppointmentStatus, cancelledReason?: string) {
+  if (!Object.values(AppointmentStatus).includes(status)) throw ApiError.badRequest("Invalid appointment status");
+  const a = await accessibleAppointment(actor, id);
+  if (actor.role === "PATIENT" && status !== AppointmentStatus.CANCELLED) throw ApiError.forbidden("Patients can only cancel appointments");
+  if (cancelledReason !== undefined && (typeof cancelledReason !== "string" || cancelledReason.length > 500)) throw ApiError.badRequest("Cancellation reason must be under 500 characters");
+  if (a.status === status) return toDto(a);
+  const transitions: Record<string, AppointmentStatus[]> = { scheduled: [AppointmentStatus.CONFIRMED, AppointmentStatus.CANCELLED, AppointmentStatus.MISSED], confirmed: [AppointmentStatus.COMPLETED, AppointmentStatus.CANCELLED, AppointmentStatus.MISSED] };
+  if (!transitions[a.status]?.includes(status)) throw ApiError.conflict("This appointment can no longer be changed");
+  const future = appointmentStart(a.date, a.time).getTime() > Date.now();
+  if (actor.role === "PATIENT" && !future) throw ApiError.conflict("Contact your care team to change a past appointment");
+  if (future && [AppointmentStatus.COMPLETED, AppointmentStatus.MISSED].includes(status)) throw ApiError.conflict("Appointment time has not arrived yet");
+  const updated = await Appointment.findOneAndUpdate({ _id: a._id, status: a.status, date: a.date, time: a.time, updatedAt: a.updatedAt }, { $set: { status, ...(status === AppointmentStatus.CANCELLED ? { cancelledReason: cancelledReason?.trim() } : {}) } }, { new: true, runValidators: true });
+  if (!updated) throw ApiError.conflict("Appointment changed; refresh and try again");
+  await refreshAlertsAfterWrite(a.patient.toString());
+  return toDto(updated);
 }
 
-export async function updateAppointmentStatus(
-  actor: AuthUser,
-  appointmentId: string,
-  status: AppointmentStatus,
-  cancelledReason?: string
-) {
-  if (!Object.values(AppointmentStatus).includes(status)) {
-    throw ApiError.badRequest("Invalid appointment status");
-  }
-  validateId(appointmentId);
-  const allowed = await getAccessiblePatientIds(actor);
-  const appointment = await Appointment.findById(appointmentId);
-  if (!appointment) throw ApiError.notFound("Appointment not found");
-
-  const related =
-    appointment.patient.toString() === actor.userId ||
-    appointment.doctor?.toString() === actor.userId ||
-    appointment.asha?.toString() === actor.userId ||
-    actor.role === "ADMIN" ||
-    (actor.role !== "PATIENT" && allowed.has(appointment.patient.toString()));
-
-  if (!related) {
-    throw ApiError.forbidden("You do not have access to this appointment");
-  }
-
-  if (actor.role === "PATIENT" && status !== AppointmentStatus.CANCELLED) {
-    throw ApiError.forbidden("Patients can only cancel appointments");
-  }
-  if (appointment.status === status) return toDto(appointment);
-  const transitions: Record<string, AppointmentStatus[]> = {
-    scheduled: [AppointmentStatus.CONFIRMED, AppointmentStatus.CANCELLED, AppointmentStatus.MISSED],
-    confirmed: [AppointmentStatus.COMPLETED, AppointmentStatus.CANCELLED, AppointmentStatus.MISSED],
-  };
-  if (!transitions[appointment.status]?.includes(status)) {
-    throw ApiError.conflict("This appointment can no longer be changed");
-  }
-  if (cancelledReason !== undefined && (typeof cancelledReason !== "string" || cancelledReason.length > 500)) {
-    throw ApiError.badRequest("Cancellation reason must be under 500 characters");
-  }
-
-  appointment.status = status;
-  if (status === AppointmentStatus.CANCELLED && cancelledReason) {
-    appointment.cancelledReason = cancelledReason;
-  }
-  await appointment.save();
-  await refreshAlertsAfterWrite(appointment.patient.toString());
-  return toDto(appointment);
+export async function rescheduleAppointment(actor: AuthUser, id: string, input: { date: string; time: string }) {
+  const a = await accessibleAppointment(actor, id);
+  const parsed = appointmentSchema.pick({ date: true, time: true }).strict().safeParse(input);
+  if (!parsed.success) throw ApiError.badRequest(parsed.error.issues[0].message);
+  assertFuture(input.date, input.time);
+  if (!active.includes(a.status)) throw ApiError.conflict("Only scheduled or confirmed appointments can be rescheduled");
+  if (actor.role === "PATIENT" && appointmentStart(a.date, a.time).getTime() <= Date.now()) throw ApiError.conflict("Contact your care team to change a past appointment");
+  if (a.date.toISOString().slice(0,10) === input.date && a.time === input.time) return toDto(a);
+  // A changed time is a new request requiring care-team confirmation again.
+  const updated = await Appointment.findOneAndUpdate({ _id: a._id, status: a.status, date: a.date, time: a.time, updatedAt: a.updatedAt }, { $set: { date: new Date(`${input.date}T00:00:00Z`), time: input.time, status: AppointmentStatus.SCHEDULED }, $inc: { scheduleVersion: 1 } }, { new: true, runValidators: true });
+  if (!updated) throw ApiError.conflict("Appointment changed; refresh and try again");
+  await refreshAlertsAfterWrite(a.patient.toString());
+  return toDto(updated);
 }
 
-function validateId(id: string): void {
-  if (!isValidObjectId(id)) throw ApiError.badRequest("Invalid id format");
-}
-
-function toDto(a: InstanceType<typeof Appointment>) {
-  return {
-    id: a._id,
-    patient: a.patient,
-    doctor: a.doctor,
-    asha: a.asha,
-    date: a.date,
-    time: a.time,
-    type: a.type,
-    status: a.status,
-    notes: a.notes,
-    cancelledReason: a.cancelledReason,
-    createdAt: a.createdAt,
-    updatedAt: a.updatedAt,
-  };
+function assertFuture(date: string, time: string) { const start = appointmentStart(date, time); if (isNaN(start.getTime()) || start.getTime() <= Date.now()) throw ApiError.badRequest("Choose a future appointment date and time (India time)"); }
+function validateId(id: string) { if (!isValidObjectId(id)) throw ApiError.badRequest("Invalid id format"); }
+async function toDto(a: InstanceType<typeof Appointment>) {
+  const staff = await User.find({ _id: { $in: [a.doctor, a.asha].filter(Boolean) } }).select("name role");
+  return { id: a._id, patient: a.patient, doctor: a.doctor, asha: a.asha, doctorName: staff.find(u => u.role === "DOCTOR")?.name, ashaName: staff.find(u => u.role === "ASHA")?.name, date: a.date, time: a.time, startsAt: appointmentStart(a.date, a.time), timeZone: APPOINTMENT_TIME_ZONE, type: a.type, status: a.status, notes: a.notes, cancelledReason: a.cancelledReason, scheduleVersion: a.scheduleVersion ?? 0, createdAt: a.createdAt, updatedAt: a.updatedAt };
 }

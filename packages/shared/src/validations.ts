@@ -1,3 +1,4 @@
+import { validAppointmentDate } from "./appointmentTime";
 import { z } from "zod";
 import { UserRole, Language } from "./types";
 import {
@@ -92,10 +93,10 @@ export const moodEntrySchema = z.object({
 });
 
 export const appointmentSchema = z.object({
-  patient: z.string(),
-  doctor: z.string().optional(),
-  asha: z.string().optional(),
-  date: z.string().refine((val) => !isNaN(Date.parse(val)), "Invalid date"),
+  patient: z.string().regex(/^[a-fA-F0-9]{24}$/, "Invalid patient ID"),
+  doctor: z.string().regex(/^[a-fA-F0-9]{24}$/).optional(),
+  asha: z.string().regex(/^[a-fA-F0-9]{24}$/).optional(),
+  date: z.string().refine((val) => validAppointmentDate(val), "Invalid date"),
   time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Time must be in HH:MM format"),
   type: z.string().trim().min(1, "Appointment type is required").max(100),
   notes: z.string().max(500).optional(),

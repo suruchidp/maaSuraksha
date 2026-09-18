@@ -10,6 +10,7 @@ export interface IAppointmentDocument extends Document {
   type: string;
   status: AppointmentStatus;
   notes?: string;
+  scheduleVersion: number;
   cancelledReason?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -28,7 +29,7 @@ const appointmentSchema = new Schema<IAppointmentDocument>(
     time: {
       type: String,
       required: true,
-      match: /^\d{2}:\d{2}$/,
+      match: /^([01]\d|2[0-3]):[0-5]\d$/,
     },
     type: { type: String, required: true, maxlength: 100 },
     status: {
@@ -37,6 +38,7 @@ const appointmentSchema = new Schema<IAppointmentDocument>(
       required: true,
       default: AppointmentStatus.SCHEDULED,
     },
+    scheduleVersion: { type: Number, default: 0 },
     notes: { type: String, maxlength: 500 },
     cancelledReason: { type: String, maxlength: 500 },
   },

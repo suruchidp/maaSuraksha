@@ -28,7 +28,7 @@ import { SeverityBadge, AlertStatusBadge, AppointmentStatusBadge } from "@/compo
 import { PregnancyHero } from "@/components/patient/PregnancyHero";
 import { QuickActionCard } from "@/components/patient/QuickActionCard";
 import { RecentAssessments } from "@/components/patient/RecentAssessments";
-import { formatDate } from "@/lib/date";
+import { formatDate, formatCalendarDate } from "@/lib/date";
 
 export default function PatientDashboardPage() {
   const { t } = useTranslation();
@@ -38,7 +38,7 @@ export default function PatientDashboardPage() {
   const pregnancy = usePregnancy();
   const metrics = useHealthMetrics(undefined, 5);
   const alerts = useAlerts(undefined, 10);
-  const appointments = useAppointments(undefined, 5);
+  const appointments = useAppointments(undefined, 5, 1, "upcoming");
   const recommendations = useRecommendations(undefined, 10);
 
   if (
@@ -52,9 +52,6 @@ export default function PatientDashboardPage() {
   }
 
   const latest = metrics.data?.items?.[0];
-  const upcoming = (appointments.data?.items ?? []).find(
-    (a) => new Date(a.date) >= new Date() && a.status !== "cancelled" && a.status !== "missed"
-  );
   const unreadRecs = (recommendations.data?.items ?? []).filter((r) => !r.isRead).length;
   const openAlerts = (alerts.data?.items ?? []).filter((a) => a.status === "pending").length;
 
@@ -202,16 +199,16 @@ export default function PatientDashboardPage() {
         </Card>
 
         <Card title={t("patient.dashboard.upcomingAppointments")}>
-          {(appointments.data?.items ?? []).length === 0 ? (
+          {appointments.isError ? <ErrorState message={appointments.error?.message} onRetry={() => appointments.refetch()} /> : (appointments.data?.items ?? []).length === 0 ? (
             <EmptyState compact title={t("appointments.none")} description={t("appointments.noneDescription")} />
           ) : (
             <ul className="space-y-0">
               {(appointments.data?.items ?? []).slice(0, 4).map((appt) => (
                 <li key={appt.id} className="py-3 flex items-center justify-between gap-3 border-b border-rose-100/60 last:border-0">
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-800 truncate">{appt.type}</p>
+                    <p className="text-sm font-medium text-gray-800 truncate">{t(`appointments.typeOptions.${appt.type}`, { defaultValue: appt.type })}</p>
                     <p className="text-xs text-gray-500">
-                      {formatDate(appt.date, lang)} · {appt.time}
+                      {formatCalendarDate(appt.date, lang)} · {appt.time} · {t("appointments.workflow.indiaTime")}
                     </p>
                   </div>
                   <AppointmentStatusBadge status={appt.status} />
