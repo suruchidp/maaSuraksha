@@ -41,6 +41,12 @@ describe("ProtectedRoute", () => {
     expect(screen.getByText("UNAUTHORIZED_PAGE")).toBeInTheDocument();
   });
 
+  it("redirects stale or malformed roles back to login instead of showing the unauthorized screen", () => {
+    mock.auth = { isAuthenticated: true, user: { role: "UNKNOWN_ROLE", name: "Broken" }, isVerifying: false };
+    renderAt("/protected");
+    expect(screen.getByText("LOGIN_PAGE")).toBeInTheDocument();
+  });
+
   it("renders protected content for an allowed role", () => {
     mock.auth = { isAuthenticated: true, user: { role: "ADMIN", name: "Admin" }, isVerifying: false };
     renderAt("/protected");

@@ -39,6 +39,7 @@ export default function LoginPage() {
 
   const loginMutation = useMutation({
     mutationFn: ({ email, password }: LoginForm) => login(email, password),
+    retry: false,
     onSuccess: async (data) => {
       setAuth(
         {

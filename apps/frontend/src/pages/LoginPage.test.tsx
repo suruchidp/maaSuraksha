@@ -24,4 +24,19 @@ describe('Login recovery', () => {
   expect(await screen.findByRole('alert')).toHaveTextContent('Sign-in service is unavailable');
   expect(screen.getByRole('button', { name: 'Sign In' })).toBeEnabled();
  });
+ it('shows the rate-limit message instead of the generic 429 axios text', async () => {
+  mocks.login.mockRejectedValueOnce({
+    response: {
+      status: 429,
+      data: {
+        error: { message: 'Too many authentication attempts. Please wait a moment and try again.' },
+      },
+    },
+  });
+  showLogin();
+  await userEvent.type(screen.getByLabelText('Email'), 'synthetic@example.com');
+  await userEvent.type(screen.getByLabelText('Password'), 'SyntheticQA123!');
+  await userEvent.click(screen.getByRole('button', { name: 'Sign In' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Too many authentication attempts');
+ });
 });

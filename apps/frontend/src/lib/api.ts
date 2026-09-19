@@ -63,13 +63,31 @@ apiClient.interceptors.response.use(
 );
 
 export function getApiErrorMessage(error: unknown): string {
-  if (axios.isAxiosError<ApiErrorEnvelope>(error)) {
-    return (
-      error.response?.data?.error?.message ||
-      error.message ||
-      "Request failed"
-    );
+  const axiosLike = typeof error === "object" && error !== null && "response" in error;
+
+  if (axios.isAxiosError<ApiErrorEnvelope | { error?: string | { message?: string } }>(error) || axiosLike) {
+    const response = (error as { response?: { status?: number; data?: { error?: string | { message?: string } } } }).response;
+    const responseError = response?.data?.error;
+    const message =
+      typeof responseError === "string"
+        ? responseError
+        : responseError?.message || (error as { message?: string })?.message || "Request failed";
+
+    if (message && message !== "Request failed") {
+      return message;
+    }
+
+    if (response?.status === 429) {
+      return "Too many authentication attempts. Please wait a moment and try again.";
+    }
+
+    return message || "Request failed";
   }
+
+  if (typeof error === "object" && error && "message" in error && typeof (error as { message?: unknown }).message === "string") {
+    return (error as { message: string }).message;
+  }
+
   return error instanceof Error ? error.message : "Request failed";
 }
 

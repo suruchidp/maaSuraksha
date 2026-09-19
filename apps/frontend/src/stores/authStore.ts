@@ -15,6 +15,25 @@ export interface SessionUser {
   createdAt?: string;
 }
 
+export const normalizeUserRole = (role?: string | null): UserRole => {
+  const value = role?.toString().trim().toUpperCase().replace(/[-\s]+/g, "_");
+
+  if (["ASHA", "ASHA_WORKER", "ASHAWORKER", "AWW", "ASHA_WORKER_ROLE"].includes(value ?? "")) {
+    return UserRole.ASHA;
+  }
+  if (["DOCTOR", "DOCTOR_WORKER", "DOCTORWORKER", "PHYSICIAN", "MEDICAL_OFFICER"].includes(value ?? "")) {
+    return UserRole.DOCTOR;
+  }
+  if (["ADMIN", "ADMINISTRATOR", "SYSTEM_ADMIN"].includes(value ?? "")) {
+    return UserRole.ADMIN;
+  }
+  if (["PATIENT", "USER", "MOTHER", "BENEFICIARY"].includes(value ?? "")) {
+    return UserRole.PATIENT;
+  }
+
+  return UserRole.PATIENT;
+};
+
 interface AuthState {
   user: SessionUser | null;
   token: string | null;
@@ -32,9 +51,10 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       isAuthenticated: false,
       setAuth: (user, token) => {
-        set({ user, token, isAuthenticated: true });
+        const normalizedUser = { ...user, role: normalizeUserRole(user.role) };
+        set({ user: normalizedUser, token, isAuthenticated: true });
       },
-      setUser: (user) => set({ user }),
+      setUser: (user) => set({ user: { ...user, role: normalizeUserRole(user.role) } }),
       logout: () => {
         set({ user: null, token: null, isAuthenticated: false });
       },
@@ -45,6 +65,26 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "maasuraksha-auth",
+      version: 2,
+      migrate: (persistedState: unknown) => {
+        const state = persistedState as {
+          user?: Partial<SessionUser> | null;
+          token?: string | null;
+          isAuthenticated?: boolean;
+        };
+
+        if (state?.user) {
+          state.user.role = normalizeUserRole(state.user.role as string | undefined);
+        }
+
+        if (state?.token && state.user) {
+          state.isAuthenticated = true;
+        } else {
+          state.isAuthenticated = false;
+        }
+
+        return state;
+      },
       partialize: (state) => ({
         user: state.user,
         token: state.token,

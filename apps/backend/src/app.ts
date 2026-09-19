@@ -37,16 +37,17 @@ app.use(helmet());
 app.use(cors({ origin: config.corsOrigin, credentials: true }));
 
 const isTest = process.env.NODE_ENV === "test";
+const isDevelopment = config.nodeEnv === "development";
 
 if (!isTest) {
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: isDevelopment ? 250 : 100,
     message: { error: "Too many requests, please try again later" },
   });
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 20,
+    max: isDevelopment ? 80 : 20,
     message: { error: "Too many authentication attempts, please try again later" },
   });
   app.use("/api", limiter);

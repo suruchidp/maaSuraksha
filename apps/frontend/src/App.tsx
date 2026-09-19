@@ -30,10 +30,40 @@ import ReportsPage from "@/pages/patient/Reports";
 import ASHADashboardPage from "@/pages/asha/Dashboard";
 import ASHAPatientsPage from "@/pages/asha/Patients";
 import ASHAPatientDetailPage from "@/pages/asha/PatientDetail";
+import {
+  ASHAHighRiskPage,
+  ASHAHomeVisitsPage,
+  ASHAAppointmentsPage,
+  ASHADeliveryTrackerPage,
+  ASHABirthPreparednessPage,
+  ASHAReferralsPage,
+  ASHAFacilitiesPage,
+  ASHANotificationsPage,
+  ASHAReportsPage,
+  ASHAEducationPage,
+  ASHAProfilePage,
+  ASHAAlertsPage,
+} from "@/pages/asha/Sections";
 
 import DoctorDashboardPage from "@/pages/doctor/Dashboard";
 import DoctorPatientsPage from "@/pages/doctor/Patients";
 import DoctorPatientDetailPage from "@/pages/doctor/PatientDetail";
+import {
+  DoctorAppointmentsPage,
+  DoctorHighRiskPage,
+  DoctorAssessmentsPage,
+  DoctorVitalsPage,
+  DoctorInvestigationsPage,
+  DoctorCarePlansPage,
+  DoctorReferralsPage,
+  DoctorASHACoordinationPage,
+  DoctorDeliveryPage,
+  DoctorFollowUpsPage,
+  DoctorNotificationsPage,
+  DoctorEducationPage,
+  DoctorReportsPage,
+  DoctorProfilePage,
+} from "@/pages/doctor/Sections";
 
 import AdminDashboardPage from "@/pages/admin/Dashboard";
 import AdminUsersPage from "@/pages/admin/Users";
@@ -97,6 +127,18 @@ export default function App() {
                 <Route index element={<Navigate to="dashboard" replace />} />
                 <Route path="dashboard" element={<ASHADashboardPage />} />
                 <Route path="patients" element={<ASHAPatientsPage />} />
+                <Route path="high-risk" element={<ASHAHighRiskPage />} />
+                <Route path="home-visits" element={<ASHAHomeVisitsPage />} />
+                <Route path="appointments" element={<ASHAAppointmentsPage />} />
+                <Route path="deliveries" element={<ASHADeliveryTrackerPage />} />
+                <Route path="birth-preparedness" element={<ASHABirthPreparednessPage />} />
+                <Route path="referrals" element={<ASHAReferralsPage />} />
+                <Route path="facilities" element={<ASHAFacilitiesPage />} />
+                <Route path="notifications" element={<ASHANotificationsPage />} />
+                <Route path="reports" element={<ASHAReportsPage />} />
+                <Route path="education" element={<ASHAEducationPage />} />
+                <Route path="profile" element={<ASHAProfilePage />} />
+                <Route path="alerts" element={<ASHAAlertsPage />} />
                 <Route path="patients/:patientId" element={<ASHAPatientDetailPage />} />
               </Route>
             </Route>
@@ -108,6 +150,20 @@ export default function App() {
                 <Route path="dashboard" element={<DoctorDashboardPage />} />
                 <Route path="patients" element={<DoctorPatientsPage />} />
                 <Route path="patients/:patientId" element={<DoctorPatientDetailPage />} />
+                <Route path="appointments" element={<DoctorAppointmentsPage />} />
+                <Route path="high-risk" element={<DoctorHighRiskPage />} />
+                <Route path="assessments" element={<DoctorAssessmentsPage />} />
+                <Route path="vitals" element={<DoctorVitalsPage />} />
+                <Route path="investigations" element={<DoctorInvestigationsPage />} />
+                <Route path="care-plans" element={<DoctorCarePlansPage />} />
+                <Route path="referrals" element={<DoctorReferralsPage />} />
+                <Route path="asha" element={<DoctorASHACoordinationPage />} />
+                <Route path="delivery" element={<DoctorDeliveryPage />} />
+                <Route path="follow-ups" element={<DoctorFollowUpsPage />} />
+                <Route path="notifications" element={<DoctorNotificationsPage />} />
+                <Route path="education" element={<DoctorEducationPage />} />
+                <Route path="reports" element={<DoctorReportsPage />} />
+                <Route path="profile" element={<DoctorProfilePage />} />
               </Route>
             </Route>
 
