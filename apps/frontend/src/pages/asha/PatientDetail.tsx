@@ -1,11 +1,9 @@
-import PregnancyPage from "@/pages/patient/Pregnancy";
-import ReportsPage from "@/pages/patient/Reports";
-import AppointmentsPage from "@/pages/patient/Appointments";
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { usePatients } from "@/hooks/queries";
 import { PatientOverview } from "@/components/caregiver/PatientOverview";
+import { PatientRecord } from "@/components/caregiver/PatientRecord";
 import { ASHAActionForms } from "@/components/caregiver/ASHAForms";
 import { Spinner } from "@/components/ui/Spinner";
 import NotFoundPage from "@/pages/NotFoundPage";
@@ -28,9 +26,7 @@ export default function ASHAPatientDetailPage() {
         </Link>
       </div>
       <PatientOverview patient={patient} />
-      <PregnancyPage key={`pregnancy-${patient.id}`} patientId={patient.id} />
-      <AppointmentsPage key={patient.id} patientId={patient.id} />
-      <ReportsPage key={`reports-${patient.id}`} patientId={patient.id} />
+      <PatientRecord patientId={patient.id} showAssessments />
       <ASHAActionForms patientId={patient.id} />
     </div>
   );

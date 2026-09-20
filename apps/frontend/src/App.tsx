@@ -36,6 +36,7 @@ import {
   ASHAAppointmentsPage,
   ASHADeliveryTrackerPage,
   ASHABirthPreparednessPage,
+  ASHAFollowUpsPage,
   ASHAReferralsPage,
   ASHAFacilitiesPage,
   ASHANotificationsPage,
@@ -132,6 +133,7 @@ export default function App() {
                 <Route path="appointments" element={<ASHAAppointmentsPage />} />
                 <Route path="deliveries" element={<ASHADeliveryTrackerPage />} />
                 <Route path="birth-preparedness" element={<ASHABirthPreparednessPage />} />
+                <Route path="follow-ups" element={<ASHAFollowUpsPage />} />
                 <Route path="referrals" element={<ASHAReferralsPage />} />
                 <Route path="facilities" element={<ASHAFacilitiesPage />} />
                 <Route path="notifications" element={<ASHANotificationsPage />} />

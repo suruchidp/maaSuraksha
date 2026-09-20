@@ -1,11 +1,13 @@
+import { useMemo } from "react";
 import { httpPatch } from "@/lib/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueries, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import { isNotFound } from "@/lib/api";
 
 import { getPregnancy, upsertPregnancy } from "@/services/pregnancy";
 import { listHealthMetrics, createHealthMetric } from "@/services/healthMetrics";
 import { listSymptoms, createSymptom } from "@/services/symptoms";
+import { listHealthRecords } from "@/services/healthRecords";
 import {
   createMaternalRisk,
   listMaternalRisk,
@@ -49,6 +51,7 @@ import {
 export const qk = {
   pregnancy: (userId?: string) => ["pregnancy", userId ?? "self"],
   metrics: (userId?: string) => ["metrics", userId ?? "self"],
+  healthRecords: (userId?: string) => ["health-records", userId ?? "self"],
   symptoms: (userId?: string) => ["symptoms", userId ?? "self"],
   maternal: (userId?: string) => ["maternal", userId ?? "self"],
   gdm: (userId?: string) => ["gdm", userId ?? "self"],
@@ -118,6 +121,14 @@ export function useHealthMetrics(targetUserId?: string, limit = 100) {
   });
 }
 
+export function useHealthRecords(targetUserId?: string, limit = 50) {
+  return useQuery({
+    queryKey: [...qk.healthRecords(targetUserId), limit],
+    queryFn: () => listHealthRecords({ page: 1, limit, userId: targetUserId }),
+    enabled: Boolean(targetUserId),
+  });
+}
+
 export function useCreateHealthMetric() {
   const qc = useQueryClient();
   const selfId = usePatientContext();
@@ -176,6 +187,42 @@ export function useLatestMaternalRisk(userId?: string) {
       return !(status === 404) && count < 1;
     },
   });
+}
+
+export function useLatestRiskByPatient(patients: { id: string }[]) {
+  const signature = patients.map((p) => p.id).join("\u0000");
+  const queries = useMemo(
+    () =>
+      patients.map((patient) => ({
+        queryKey: ["maternal", "latest", "caregiver", patient.id],
+        queryFn: () => latestMaternalRisk(patient.id),
+        enabled: Boolean(patient.id),
+        retry: (count: number, error: unknown) => {
+          const status = (error as { response?: { status?: number } })?.response?.status;
+          return !(status === 404) && count < 1;
+        },
+      })),
+    [signature],
+  );
+  return useQueries({ queries });
+}
+
+export function usePregnancyByPatient(patients: { id: string }[]) {
+  const signature = patients.map((p) => p.id).join("\u0000");
+  const queries = useMemo(
+    () =>
+      patients.map((patient) => ({
+        queryKey: ["pregnancy", "caregiver", patient.id],
+        queryFn: () => getPregnancy(patient.id),
+        enabled: Boolean(patient.id),
+        retry: (count: number, error: unknown) => {
+          const status = (error as { response?: { status?: number } })?.response?.status;
+          return !(status === 404) && count < 1;
+        },
+      })),
+    [signature],
+  );
+  return useQueries({ queries });
 }
 
 export function useCreateMaternalRisk() {

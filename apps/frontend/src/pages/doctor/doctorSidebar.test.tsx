@@ -1,27 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { DOCTOR_NAV_ITEMS } from "@/components/layout/AppLayout";
+import { ASHA_NAV_ITEMS, DOCTOR_NAV_ITEMS } from "@/components/layout/AppLayout";
 
 describe("Doctor navigation", () => {
-  it("contains all 16 required doctor sidebar items in order", () => {
-    const labels = DOCTOR_NAV_ITEMS.map((item) => item.labelKey);
-
-    expect(labels).toEqual([
+  it("contains the required doctor sidebar items in order", () => {
+    expect(ASHA_NAV_ITEMS).toBeDefined();
+    expect(DOCTOR_NAV_ITEMS.map((item) => item.labelKey)).toEqual([
       "nav.dashboard",
       "nav.patients",
-      "nav.appointments",
       "nav.highRisk",
-      "nav.assessments",
-      "nav.vitals",
-      "nav.investigations",
-      "nav.carePlans",
-      "nav.referrals",
-      "nav.ashaCoordination",
-      "nav.deliveryPlanning",
-      "nav.followUps",
-      "nav.notifications",
-      "nav.healthEducation",
-      "nav.reportsAnalytics",
-      "nav.profileSettings",
+      "nav.appointments",
+      "nav.reports",
+      "nav.profile",
     ]);
   });
 
@@ -29,20 +18,32 @@ describe("Doctor navigation", () => {
     expect(DOCTOR_NAV_ITEMS.map((item) => item.to)).toEqual([
       "/doctor/dashboard",
       "/doctor/patients",
-      "/doctor/appointments",
       "/doctor/high-risk",
-      "/doctor/assessments",
-      "/doctor/vitals",
-      "/doctor/investigations",
-      "/doctor/care-plans",
-      "/doctor/referrals",
-      "/doctor/asha",
-      "/doctor/delivery",
-      "/doctor/follow-ups",
-      "/doctor/notifications",
-      "/doctor/education",
+      "/doctor/appointments",
       "/doctor/reports",
       "/doctor/profile",
+    ]);
+  });
+});
+
+describe("ASHA navigation", () => {
+  it("contains the required ASHA sidebar items in order", () => {
+    expect(ASHA_NAV_ITEMS.map((item) => item.labelKey)).toEqual([
+      "nav.dashboard",
+      "nav.assignedWomen",
+      "nav.followUps",
+      "nav.referrals",
+      "nav.profile",
+    ]);
+  });
+
+  it("includes the expected ASHA routes for all sidebar entries", () => {
+    expect(ASHA_NAV_ITEMS.map((item) => item.to)).toEqual([
+      "/asha/dashboard",
+      "/asha/patients",
+      "/asha/follow-ups",
+      "/asha/referrals",
+      "/asha/profile",
     ]);
   });
 });

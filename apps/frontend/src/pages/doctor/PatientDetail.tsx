@@ -1,11 +1,9 @@
-import PregnancyPage from "@/pages/patient/Pregnancy";
-import ReportsPage from "@/pages/patient/Reports";
-import AppointmentsPage from "@/pages/patient/Appointments";
 import { useTranslation } from "react-i18next";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { usePatients } from "@/hooks/queries";
 import { PatientOverview } from "@/components/caregiver/PatientOverview";
+import { PatientRecord } from "@/components/caregiver/PatientRecord";
 import { DoctorActionForms } from "@/components/caregiver/DoctorForms";
 import { MaternalRiskPanel, GDMPanel, PPDPanel } from "@/components/assessments/AssessmentPanels";
 import { Spinner } from "@/components/ui/Spinner";
@@ -29,9 +27,7 @@ export default function DoctorPatientDetailPage() {
         </Link>
       </div>
       <PatientOverview patient={patient} />
-      <PregnancyPage key={`pregnancy-${patient.id}`} patientId={patient.id} />
-      <AppointmentsPage key={patient.id} patientId={patient.id} />
-      <ReportsPage key={`reports-${patient.id}`} patientId={patient.id} />
+      <PatientRecord patientId={patient.id} showAssessments={false} />
 
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-3">{t("doctor.runAssessments")}</h2>

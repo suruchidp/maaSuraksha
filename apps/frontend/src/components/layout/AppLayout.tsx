@@ -21,9 +21,7 @@ import {
   Stethoscope,
   LayoutDashboard,
   AlertTriangle,
-  MapPin,
   Clock3,
-  HeartPulse,
   UserCog,
 } from "lucide-react";
 import { useAuthStore, normalizeUserRole } from "@/stores/authStore";
@@ -49,20 +47,18 @@ interface NavItem {
 export const DOCTOR_NAV_ITEMS: NavItem[] = [
   { to: "/doctor/dashboard", labelKey: "nav.dashboard", icon: <LayoutDashboard className="w-5 h-5" />, roles: ["DOCTOR" as UserRole] },
   { to: "/doctor/patients", labelKey: "nav.patients", icon: <Stethoscope className="w-5 h-5" />, roles: ["DOCTOR" as UserRole] },
-  { to: "/doctor/appointments", labelKey: "nav.appointments", icon: <Calendar className="w-5 h-5" />, roles: ["DOCTOR" as UserRole] },
   { to: "/doctor/high-risk", labelKey: "nav.highRisk", icon: <AlertTriangle className="w-5 h-5" />, roles: ["DOCTOR" as UserRole] },
-  { to: "/doctor/assessments", labelKey: "nav.assessments", icon: <ClipboardList className="w-5 h-5" />, roles: ["DOCTOR" as UserRole] },
-  { to: "/doctor/vitals", labelKey: "nav.vitals", icon: <HeartPulse className="w-5 h-5" />, roles: ["DOCTOR" as UserRole] },
-  { to: "/doctor/investigations", labelKey: "nav.investigations", icon: <FileBarChart className="w-5 h-5" />, roles: ["DOCTOR" as UserRole] },
-  { to: "/doctor/care-plans", labelKey: "nav.carePlans", icon: <FileText className="w-5 h-5" />, roles: ["DOCTOR" as UserRole] },
-  { to: "/doctor/referrals", labelKey: "nav.referrals", icon: <AlertTriangle className="w-5 h-5" />, roles: ["DOCTOR" as UserRole] },
-  { to: "/doctor/asha", labelKey: "nav.ashaCoordination", icon: <Users className="w-5 h-5" />, roles: ["DOCTOR" as UserRole] },
-  { to: "/doctor/delivery", labelKey: "nav.deliveryPlanning", icon: <HeartPulse className="w-5 h-5" />, roles: ["DOCTOR" as UserRole] },
-  { to: "/doctor/follow-ups", labelKey: "nav.followUps", icon: <Clock3 className="w-5 h-5" />, roles: ["DOCTOR" as UserRole] },
-  { to: "/doctor/notifications", labelKey: "nav.notifications", icon: <Bell className="w-5 h-5" />, roles: ["DOCTOR" as UserRole] },
-  { to: "/doctor/education", labelKey: "nav.healthEducation", icon: <BookOpen className="w-5 h-5" />, roles: ["DOCTOR" as UserRole] },
-  { to: "/doctor/reports", labelKey: "nav.reportsAnalytics", icon: <FileBarChart className="w-5 h-5" />, roles: ["DOCTOR" as UserRole] },
-  { to: "/doctor/profile", labelKey: "nav.profileSettings", icon: <UserCog className="w-5 h-5" />, roles: ["DOCTOR" as UserRole] },
+  { to: "/doctor/appointments", labelKey: "nav.appointments", icon: <Calendar className="w-5 h-5" />, roles: ["DOCTOR" as UserRole] },
+  { to: "/doctor/reports", labelKey: "nav.reports", icon: <FileBarChart className="w-5 h-5" />, roles: ["DOCTOR" as UserRole] },
+  { to: "/doctor/profile", labelKey: "nav.profile", icon: <UserCog className="w-5 h-5" />, roles: ["DOCTOR" as UserRole] },
+];
+
+export const ASHA_NAV_ITEMS: NavItem[] = [
+  { to: "/asha/dashboard", labelKey: "nav.dashboard", icon: <LayoutDashboard className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
+  { to: "/asha/patients", labelKey: "nav.assignedWomen", icon: <Users className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
+  { to: "/asha/follow-ups", labelKey: "nav.followUps", icon: <Clock3 className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
+  { to: "/asha/referrals", labelKey: "nav.referrals", icon: <AlertTriangle className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
+  { to: "/asha/profile", labelKey: "nav.profile", icon: <UserCog className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
 ];
 
 const NAV_ITEMS: NavItem[] = [
@@ -80,19 +76,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/patient/education", labelKey: "nav.education", icon: <BookOpen className="w-5 h-5" />, roles: ["PATIENT" as UserRole] },
   { to: "/patient/chat", labelKey: "nav.chatbot", icon: <Bot className="w-5 h-5" />, roles: ["PATIENT" as UserRole] },
   { to: "/patient/reports", labelKey: "nav.reports", icon: <FileBarChart className="w-5 h-5" />, roles: ["PATIENT" as UserRole] },
-  { to: "/asha/dashboard", labelKey: "nav.dashboard", icon: <LayoutDashboard className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
-  { to: "/asha/patients", labelKey: "nav.assignedPatients", icon: <Users className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
-  { to: "/asha/high-risk", labelKey: "nav.highRisk", icon: <Shield className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
-  { to: "/asha/home-visits", labelKey: "nav.homeVisits", icon: <Clock3 className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
-  { to: "/asha/appointments", labelKey: "nav.appointments", icon: <Calendar className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
-  { to: "/asha/deliveries", labelKey: "nav.deliveryTracker", icon: <HeartPulse className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
-  { to: "/asha/birth-preparedness", labelKey: "nav.birthPreparedness", icon: <ClipboardList className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
-  { to: "/asha/referrals", labelKey: "nav.referrals", icon: <AlertTriangle className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
-  { to: "/asha/facilities", labelKey: "nav.healthFacilities", icon: <MapPin className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
-  { to: "/asha/notifications", labelKey: "nav.notifications", icon: <Bell className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
-  { to: "/asha/reports", labelKey: "nav.reports", icon: <FileBarChart className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
-  { to: "/asha/education", labelKey: "nav.education", icon: <BookOpen className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
-  { to: "/asha/profile", labelKey: "nav.profile", icon: <UserCog className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
+  ...ASHA_NAV_ITEMS,
   ...DOCTOR_NAV_ITEMS,
   { to: "/admin/dashboard", labelKey: "nav.systemOverview", icon: <LayoutDashboard className="w-5 h-5" />, roles: ["ADMIN" as UserRole] },
   { to: "/admin/appointments", labelKey: "nav.appointments", icon: <Calendar className="w-5 h-5" />, roles: ["ADMIN" as UserRole] },

@@ -1,16 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockHttpList = vi.fn();
-const mockGetState = vi.fn();
 
 vi.mock("@/lib/api", () => ({
   httpList: mockHttpList,
-}));
-
-vi.mock("@/stores/authStore", () => ({
-  useAuthStore: {
-    getState: mockGetState,
-  },
 }));
 
 describe("listAccessiblePatients", () => {
@@ -18,12 +11,12 @@ describe("listAccessiblePatients", () => {
     vi.clearAllMocks();
   });
 
-  it("adds Rose to the ASHA patient list so the dashboard patient actions resolve correctly", async () => {
-    mockGetState.mockReturnValue({ user: { role: "ASHA" } });
+  it("returns the patient list exactly as the API provides it (no fabricated patients)", async () => {
+    const serverItems = [
+      { id: "p-101", name: "Anita Verma", email: "anita@example.com", role: "PATIENT", language: "en", isActive: true, createdAt: "2026-09-01T00:00:00.000Z", updatedAt: "2026-09-19T00:00:00.000Z" },
+    ];
     mockHttpList.mockResolvedValue({
-      items: [
-        { id: "p-101", name: "Anita Verma", email: "anita@example.com", role: "PATIENT" },
-      ],
+      items: serverItems,
       total: 1,
       totalPages: 1,
       page: 1,
@@ -33,7 +26,23 @@ describe("listAccessiblePatients", () => {
     const { listAccessiblePatients } = await import("./patients");
     const result = await listAccessiblePatients({ limit: 20 });
 
-    expect(result.items.some((patient) => patient.name === "Rose" && patient.id === "p-106")).toBe(true);
-    expect(result.items.find((patient) => patient.name === "Rose")?.email).toBe("rose.test@example.com");
+    expect(result.items).toEqual(serverItems);
+    expect(result.total).toBe(1);
+    expect(result.totalPages).toBe(1);
+  });
+
+  it("forwards query params to the API unchanged", async () => {
+    mockHttpList.mockResolvedValue({
+      items: [],
+      total: 0,
+      totalPages: 0,
+      page: 1,
+      limit: 20,
+    });
+
+    const { listAccessiblePatients } = await import("./patients");
+    await listAccessiblePatients({ search: "meera", limit: 5 });
+
+    expect(mockHttpList).toHaveBeenCalledWith("/patients", { search: "meera", limit: 5 });
   });
 });
