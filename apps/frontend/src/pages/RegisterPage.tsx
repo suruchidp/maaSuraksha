@@ -45,10 +45,6 @@ export default function RegisterPage() {
     defaultValues: { role: UserRole.PATIENT, language: Language.EN },
   });
 
-  if (isAuthenticated && sessionUser) {
-    return <Navigate to={`/${sessionUser.role.toLowerCase()}/dashboard`} replace />;
-  }
-
   const registerMutation = useMutation({
     mutationFn: (data: RegisterForm) =>
       registerApi({
@@ -81,6 +77,10 @@ export default function RegisterPage() {
       push(getApiErrorMessage(err), "error");
     },
   });
+
+  if (isAuthenticated && sessionUser) {
+    return <Navigate to={`/${sessionUser.role.toLowerCase()}/dashboard`} replace />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-maternal-sheen py-12 px-4">
