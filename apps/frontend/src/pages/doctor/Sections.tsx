@@ -245,11 +245,20 @@ export function DoctorAssessmentsPage() {
           ) : (
             <div className="space-y-3">
               {tabData.map((item) => {
-                const assessment = item as { id: string; riskLevel?: string; riskScore?: number; riskFactors?: string[]; recommendations?: string[]; createdAt: string; message?: string };
+                const assessment = item as { id: string; riskLevel?: string; riskScore?: number; severity?: string; edinburghScore?: number; modelConfidence?: number; riskFactors?: string[]; recommendations?: string[]; createdAt: string; message?: string };
+                const isPPD = "severity" in assessment;
+                const levelLabel = assessment.severity ?? assessment.riskLevel ?? "pending";
                 return (
-                  <Card key={assessment.id} title={`${formatDate(assessment.createdAt)} · ${assessment.riskLevel ?? "pending"}`}>
+                  <Card key={assessment.id} title={`${formatDate(assessment.createdAt)} · ${levelLabel}`}>
                     <div className="space-y-2 text-sm text-gray-600">
-                      <p><span className="font-medium">Score:</span> {assessment.riskScore ?? "—"}</p>
+                      {isPPD ? (
+                        <>
+                          {typeof assessment.edinburghScore === "number" && <p><span className="font-medium">EPDS score:</span> {assessment.edinburghScore}/30</p>}
+                          {typeof assessment.modelConfidence === "number" && <p><span className="font-medium">Model confidence:</span> {assessment.modelConfidence}</p>}
+                        </>
+                      ) : (
+                        <p><span className="font-medium">Score:</span> {assessment.riskScore ?? "—"}</p>
+                      )}
                       {assessment.riskFactors && assessment.riskFactors.length > 0 && <p><span className="font-medium">Risk factors:</span> {assessment.riskFactors.join(", ")}</p>}
                       {assessment.recommendations && assessment.recommendations.length > 0 && <p><span className="font-medium">Recommendations:</span> {assessment.recommendations.join(" · ")}</p>}
                       {assessment.message && <p className="text-xs text-gray-400">{assessment.message}</p>}
@@ -283,7 +292,7 @@ export function DoctorVitalsPage() {
         { label: "Weight", value: latest.weight != null ? `${latest.weight} kg` : "—" },
         { label: "Glucose", value: latest.glucose != null ? `${latest.glucose} mg/dL` : "—" },
         { label: "Heart Rate", value: latest.heartRate != null ? `${latest.heartRate} bpm` : "—" },
-        { label: "Temperature", value: latest.temperature != null ? `${latest.temperature} °F` : "—" },
+        { label: "Temperature", value: latest.temperature != null ? `${latest.temperature} °C` : "—" },
         { label: "Hemoglobin", value: latest.hemoglobin != null ? `${latest.hemoglobin} g/dL` : "—" },
       ]
     : [];

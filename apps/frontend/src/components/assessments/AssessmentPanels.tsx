@@ -30,6 +30,8 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { AssessmentResult } from "@/components/ml/AssessmentResult";
 import { ShapChart } from "@/components/ml/ShapChart";
 import { AssessmentStatusBadge } from "@/components/status/StatusLabels";
+import { GDM_SCREENING_THRESHOLD } from "@/lib/mlUtils";
+import type { GDMAssessmentDTO } from "@/lib/types";
 
 /* react-hook-form's `valueAsNumber` converts an empty number input to NaN.
    zod's `.optional()` only accepts `undefined`, so a blank optional field
@@ -257,6 +259,23 @@ type GDMForm = {
   sedentaryLifestyle: boolean;
 };
 
+/* Screening presentation for a completed GDM result: derives the primary
+   "Screening Positive/Negative" headline from the model's risk flag and shows
+   the actual model score. The configured threshold is only forwarded when the
+   served model version matches the metadata the threshold was mirrored from —
+   otherwise the UI refuses to claim a threshold for a different model. */
+function gdmScreeningProps(result: GDMAssessmentDTO | undefined) {
+  if (!result || result.status !== "completed" || typeof result.riskScore !== "number") {
+    return undefined;
+  }
+  const thresholdKnown = result.modelVersion === GDM_SCREENING_THRESHOLD.modelVersion;
+  return {
+    positive: result.riskLevel === "high",
+    score: result.riskScore,
+    threshold: thresholdKnown ? GDM_SCREENING_THRESHOLD.positive : undefined,
+  };
+}
+
 export function GDMPanel({ userId }: { userId: string }) {
   const { t } = useTranslation();
   const lang = useCurrentLanguage();
@@ -388,6 +407,7 @@ export function GDMPanel({ userId }: { userId: string }) {
           recommendations={result.recommendations}
           message={result.message}
           modelVersion={result.modelVersion}
+          screening={gdmScreeningProps(result)}
           shapChart={<ShapChart kind="gdm" shapValues={result.shapValues} inputValues={result.inputFeatures} modelVersion={result.modelVersion} />}
         />
       )}

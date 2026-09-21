@@ -69,21 +69,20 @@ def _patch_transformers(monkeypatch, results):
 
 
 def test_ppd_service_available_with_artifact(tmp_path, monkeypatch):
-    _write_nlp_artifact("ppd", tmp_path, ["none", "mild", "moderate", "severe"])
+    _write_nlp_artifact("ppd", tmp_path, ["no", "postpartum"])
     _patch_transformers(
         monkeypatch,
         [
-            {"label": "severe", "score": 0.81},
-            {"label": "moderate", "score": 0.10},
-            {"label": "mild", "score": 0.05},
-            {"label": "none", "score": 0.04},
+            {"label": "postpartum", "score": 0.81},
+            {"label": "no", "score": 0.19},
         ],
     )
     monkeypatch.setattr(paths, "artifacts_root", lambda: tmp_path)
     result = PPDPredictor().predict(_Input({"text": "I cannot stop crying", "language": "en"}))
     assert result["model_status"] == "MODEL_AVAILABLE"
-    assert result["prediction"] == "severe"
+    assert result["prediction"] == "positive_screen"
     assert result["probability"] == pytest.approx(0.81)
+    assert result["risk_level"] == "high"
     assert result["model_version"] == "nlp-fixture-v1"
 
 

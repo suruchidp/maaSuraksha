@@ -5,6 +5,7 @@ export interface IPPDAssessmentDocument extends Document {
   user: mongoose.Types.ObjectId;
   assessedBy: mongoose.Types.ObjectId;
   status: "pending" | "completed" | "unavailable";
+  edinburghAnswers?: number[];
   edinburghScore?: number;
   severity?: PPDSeverity;
   riskFactors: string[];
@@ -38,6 +39,15 @@ const ppdAssessmentSchema = new Schema<IPPDAssessmentDocument>(
         enum: ["pending", "completed", "unavailable"],
         required: true,
         default: "pending",
+      },
+      edinburghAnswers: {
+        type: [Number],
+        min: 0,
+        max: 3,
+        validate: {
+          validator: (v: number[]) => v.length === 0 || v.length === 10,
+          message: "EPDS requires exactly 10 answers when provided",
+        },
       },
       edinburghScore: {
         type: Number,

@@ -31,6 +31,7 @@ describe("ASHA navigation", () => {
     expect(ASHA_NAV_ITEMS.map((item) => item.labelKey)).toEqual([
       "nav.dashboard",
       "nav.assignedWomen",
+      "nav.homeVisits",
       "nav.followUps",
       "nav.referrals",
       "nav.profile",
@@ -41,6 +42,7 @@ describe("ASHA navigation", () => {
     expect(ASHA_NAV_ITEMS.map((item) => item.to)).toEqual([
       "/asha/dashboard",
       "/asha/patients",
+      "/asha/home-visits",
       "/asha/follow-ups",
       "/asha/referrals",
       "/asha/profile",

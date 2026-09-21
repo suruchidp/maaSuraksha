@@ -13,6 +13,7 @@ export function AssessmentResult({
   shapChart,
   message,
   modelVersion,
+  screening,
   children,
 }: {
   title: string;
@@ -23,14 +24,64 @@ export function AssessmentResult({
   shapChart?: ReactNode;
   message?: string;
   modelVersion?: string;
+  /** GDM-style screening presentation: a primary "Screening Positive/Negative"
+   *  headline with the actual model score and the configured screening
+   *  threshold, keeping the score framed as a decision-support flag rather
+   *  than a diagnosis. `threshold` is optional and only set when the served
+   *  model version matched the metadata the threshold was read from. */
+  screening?: {
+    positive: boolean;
+    score: number;
+    threshold?: number;
+  };
   children?: ReactNode;
 }) {
   const { t } = useTranslation();
   const color: BadgeColor = status === "completed" ? riskColor(riskLevel) : "gray";
 
+  const screeningScorePct = screening ? Math.round(screening.score * 100) : null;
+  const screeningThresholdPct =
+    screening && screening.threshold !== undefined
+      ? Math.round(screening.threshold * 100)
+      : null;
+
   return (
     <Card title={title}>
-      {riskLevel !== undefined && riskLevel !== null && (
+      {status === "completed" && screening && (
+        <div
+          className={`rounded-lg border p-3 mb-3 ${
+            screening.positive ? "border-red-200 bg-red-50" : "border-green-200 bg-green-50"
+          }`}
+        >
+          <p
+            className={`text-base font-semibold ${
+              screening.positive ? "text-red-700" : "text-green-700"
+            }`}
+          >
+            {t(screening.positive ? "assessment.screeningPositive" : "assessment.screeningNegative")}
+          </p>
+          {screeningScorePct !== null && (
+            <p className="text-sm text-gray-700 mt-1">
+              {t("assessment.screeningScore")}: <strong>{screeningScorePct}%</strong>
+            </p>
+          )}
+          {screeningThresholdPct !== null && (
+            <>
+              <p className="text-sm text-gray-700">
+                {t("assessment.screeningThreshold")}: <strong>{screeningThresholdPct}%</strong>
+              </p>
+              <p className="text-sm text-gray-600">
+                {t(screening.positive ? "assessment.screeningAbove" : "assessment.screeningBelow")}
+              </p>
+            </>
+          )}
+          <p className="text-xs text-gray-500 mt-2 italic">
+            {t("assessment.screeningDisclaimer")}
+          </p>
+        </div>
+      )}
+
+      {!screening && riskLevel !== undefined && riskLevel !== null && (
         <div className="flex items-center gap-2 mb-2">
           <span className="text-sm text-gray-600">{t("assessment.riskLevel")}:</span>
           <Badge color={color}>{riskLevel}</Badge>

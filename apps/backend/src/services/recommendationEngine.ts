@@ -257,7 +257,7 @@ export function recommendationsForContext(
  * results are read; pending / unavailable assessments are ignored.
  */
 export async function buildContext(userId: string): Promise<EngineContext> {
-  const [profile, maternal, gdm, ppd, latestSymptom, sysBP, diaBP, glucose, hemoglobin] =
+  const [profile, maternal, gdm, ppd, latestSymptom, bp, glucose, hemoglobin] =
     await Promise.all([
       PregnancyProfile.findOne({ user: userId }).lean(),
       MaternalRiskAssessment.findOne({ user: userId, status: "completed" })
@@ -270,10 +270,12 @@ export async function buildContext(userId: string): Promise<EngineContext> {
         .sort({ createdAt: -1 })
         .lean(),
       Symptom.findOne({ user: userId }).sort({ date: -1 }).lean(),
-      HealthMetric.findOne({ user: userId, systolicBP: { $exists: true } })
-        .sort({ date: -1 })
-        .lean(),
-      HealthMetric.findOne({ user: userId, diastolicBP: { $exists: true } })
+      // Systolic and diastolic must come from the SAME measurement record so
+      // the recommendation engine never pairs readings across visits.
+      HealthMetric.findOne({
+        user: userId,
+        $or: [{ systolicBP: { $exists: true } }, { diastolicBP: { $exists: true } }],
+      })
         .sort({ date: -1 })
         .lean(),
       HealthMetric.findOne({ user: userId, glucose: { $exists: true } })
@@ -317,11 +319,10 @@ export async function buildContext(userId: string): Promise<EngineContext> {
     ctx.latestSymptom = { severity: latestSymptom.severity };
   }
 
-  if (sysBP || diaBP || glucose || hemoglobin) {
+  if (bp || glucose || hemoglobin) {
     ctx.latestMetrics = {
-      systolicBP: (sysBP?.systolicBP as number | undefined) ?? (diaBP?.systolicBP as number | undefined),
-      diastolicBP:
-        (diaBP?.diastolicBP as number | undefined) ?? (sysBP?.diastolicBP as number | undefined),
+      systolicBP: bp?.systolicBP as number | undefined,
+      diastolicBP: bp?.diastolicBP as number | undefined,
       glucose: glucose?.glucose as number | undefined,
       hemoglobin: hemoglobin?.hemoglobin as number | undefined,
     };

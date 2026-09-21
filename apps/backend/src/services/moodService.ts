@@ -5,6 +5,7 @@ import { ApiError } from "../utils/ApiError";
 import { getAccessiblePatientIds } from "./accessService";
 import { AuthUser } from "../middleware/auth";
 import { analyzeMood } from "./mlClient";
+import { refreshAlertsAfterWrite } from "./alertEngine";
 
 const UNAVAILABLE_MESSAGE =
   "Mood analysis (NLP) is not available in this environment yet. " +
@@ -40,10 +41,11 @@ export async function createMoodEntry(
           sentimentScore: ml.sentimentScore,
           safetyFlag: ml.safetyFlag,
           safetyNotes: ml.safetyMessage,
-          keywords: ml.safetyFlag ? [] : [],
+          keywords: [],
         },
       }
     );
+    await refreshAlertsAfterWrite(userId);
     const updated = await MoodEntry.findById(entry._id);
     return {
       ...toDto(updated ?? entry),
@@ -57,6 +59,7 @@ export async function createMoodEntry(
       { _id: entry._id },
       { $set: { safetyFlag: ml.safetyFlag, safetyNotes: ml.safetyMessage } }
     );
+    await refreshAlertsAfterWrite(userId);
     const updated = await MoodEntry.findById(entry._id);
     return {
       ...toDto(updated ?? entry),

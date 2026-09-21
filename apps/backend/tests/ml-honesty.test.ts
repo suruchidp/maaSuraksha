@@ -77,7 +77,7 @@ describe("ML honesty policy (pending state, no fabricated scores)", () => {
     expect(res.body.data.message).toContain("not available");
   });
 
-  it("stores PPD answers in a pending state without an Edinburgh score", async () => {
+  it("stores PPD answers and the deterministic EPDS sum without inventing a severity", async () => {
     const res = await api()
       .post("/api/v1/assessments/ppd")
       .set("Authorization", `Bearer ${tok}`)
@@ -87,7 +87,8 @@ describe("ML honesty policy (pending state, no fabricated scores)", () => {
       });
     expect(res.status).toBe(201);
     expect(res.body.data.status).toBe("pending");
-    expect(res.body.data.edinburghScore).toBeUndefined();
+    expect(res.body.data.edinburghAnswers).toEqual([1, 0, 0, 1, 0, 0, 1, 0, 0, 1]);
+    expect(res.body.data.edinburghScore).toBe(4);
     expect(res.body.data.severity).toBeUndefined();
     expect(res.body.data.message).toContain("not available");
   });

@@ -395,6 +395,39 @@ describe("diet guidance engine — persistence (snapshot semantics)", () => {
     ]);
   });
 
+  it("never pairs systolic and diastolic readings from different metric records in diet guidance", async () => {
+    const userId = new mongoose.Types.ObjectId();
+    await HealthMetric.create({
+      user: userId,
+      date: new Date(Date.now() - 2 * 86400000),
+      systolicBP: 165,
+    });
+    await HealthMetric.create({
+      user: userId,
+      date: new Date(),
+      diastolicBP: 95,
+    });
+    expect(await regenerateDietGuidance(String(userId))).toBe(2);
+    const docs = await DietGuidance.find({ user: userId }).lean();
+    expect(docs.map((d) => d.templateKey).sort()).toEqual([
+      "meals-vegetarian-other",
+      "stage-missing",
+    ]);
+  });
+
+  it("emits blood pressure diet guidance only from a single metric record", async () => {
+    const userId = new mongoose.Types.ObjectId();
+    await HealthMetric.create({
+      user: userId,
+      date: new Date(),
+      systolicBP: 150,
+      diastolicBP: 96,
+    });
+    expect(await regenerateDietGuidance(String(userId))).toBe(3);
+    const docs = await DietGuidance.find({ user: userId }).lean();
+    expect(docs.map((d) => d.templateKey).sort()).toContain("metric-bp");
+  });
+
   it("keeps high-risk review when high risk comes from the profile only", async () => {
     const userId = new mongoose.Types.ObjectId();
     await PregnancyProfile.create({

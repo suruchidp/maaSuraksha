@@ -12,6 +12,7 @@
     "dev:frontend": "npm run dev --workspace=apps/frontend",
     "dev:backend": "npm run dev --workspace=apps/backend",
     "dev:ml": "npm run dev --workspace=apps/ml-service",
+    "seed:admin": "tsx scripts/seed-admin.ts",
     "build": "npm run build --workspace=packages/shared && npm run build --workspace=apps/frontend && npm run build --workspace=apps/backend",
     "build:frontend": "npm run build --workspace=apps/frontend",
     "build:backend": "npm run build --workspace=apps/backend",

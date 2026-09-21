@@ -103,6 +103,21 @@ export function ReferralStatusBadge({ status }: { status?: string | null }) {
   return <Badge color={color}>{t(`status.referral.${status}`, { defaultValue: status })}</Badge>;
 }
 
+/* Home visit status */
+export function HomeVisitStatusBadge({ status }: { status?: string | null }) {
+  const { t } = useTranslation();
+  if (!status) return null;
+  const color: BadgeColor =
+    status === "completed"
+      ? "green"
+      : status === "scheduled"
+      ? "blue"
+      : status === "cancelled" || status === "escalated"
+      ? "red"
+      : "amber";
+  return <Badge color={color}>{t(`status.homeVisit.${status}`, { defaultValue: status })}</Badge>;
+}
+
 /* Alert lifecycle status */
 export function AlertStatusBadge({ status }: { status?: string | null }) {
   const { t } = useTranslation();

@@ -42,9 +42,9 @@ export default function ReferralsPage() {
               </div>
               <h3 className="font-semibold text-gray-900 text-sm">{ref.reason}</h3>
               <div className="text-sm text-gray-600 mt-1 space-y-0.5">
-                {ref.referredTo && (
+                {ref.referredToName && (
                   <p>
-                    {t("referrals.referredTo")}: {ref.referredTo}
+                    {t("referrals.referredTo")}: {ref.referredToName}
                   </p>
                 )}
                 {ref.facility && (

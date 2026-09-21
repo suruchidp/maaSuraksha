@@ -13,8 +13,8 @@ Until an artifact exists, every inference endpoint returns
 |-------|---------------|--------|
 | Maternal Risk | `artifacts/maternal_risk/` (`model.xgb` + `metadata.json`) | XGBoost `XGBClassifier` (binary, 6 features) |
 | GDM (early-risk decision support) | `artifacts/gdm/` (`model.xgb` + `metadata.json`) | XGBoost `XGBClassifier` (binary, 13 features) |
-| PPD | `artifacts/ppd/` (`model/` HF dir + `metadata.json`) | DistilBERT sequence classifier (4 classes) |
-| Mood | `artifacts/mood/` (`model/` HF dir + `metadata.json`) | DistilBERT sequence classifier (3 classes) |
+| PPD | `artifacts/ppd/` (`model/` HF dir + `metadata.json`) | DistilBERT binary classifier (`postpartum \| no`) |
+| Mood | `artifacts/mood/` (**not deployed** — no artifact exists; mood is `MODEL_UNAVAILABLE`) | — |
 
 The Maternal Risk model trains on **exactly six features**
 (`age, systolic_bp, diastolic_bp, blood_sugar, body_temp, heart_rate`) sourced

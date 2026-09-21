@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
   useCreateAlert: vi.fn(),
   useCreateReferral: vi.fn(),
   useCreateAppointment: vi.fn(),
+  useDoctors: vi.fn(),
   useCurrentLanguage: vi.fn(),
   useAuthStore: vi.fn(),
   useToastStore: vi.fn(),
@@ -43,6 +44,7 @@ vi.mock("@/hooks/queries", () => ({
   useCreateAlert: (...a: unknown[]) => mocks.useCreateAlert(...a),
   useCreateReferral: (...a: unknown[]) => mocks.useCreateReferral(...a),
   useCreateAppointment: (...a: unknown[]) => mocks.useCreateAppointment(...a),
+  useDoctors: (...a: unknown[]) => mocks.useDoctors(...a),
 }));
 
 vi.mock("@/hooks/useAuth", () => ({
@@ -150,6 +152,7 @@ function mockDefaults() {
   mocks.useCreateAlert.mockReturnValue({ mutate: vi.fn(), isPending: false });
   mocks.useCreateReferral.mockReturnValue({ mutate: vi.fn(), isPending: false });
   mocks.useCreateAppointment.mockReturnValue({ mutate: vi.fn(), isPending: false });
+  mocks.useDoctors.mockReturnValue(okHook([{ id: "d1", name: "Dr. Anil" }]));
   mocks.useCurrentLanguage.mockReturnValue("en");
   mocks.useAuthStore.mockImplementation((selector: unknown) => {
     const state = { user: { id: "a1", name: "ASHA Tara", role: "ASHA", language: "en" } };

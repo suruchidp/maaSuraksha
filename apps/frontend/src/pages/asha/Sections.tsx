@@ -7,11 +7,20 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Field } from "@/components/ui/Field";
+import { Textarea } from "@/components/ui/Textarea";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { StatCard } from "@/components/ui/StatCard";
 import { Spinner } from "@/components/ui/Spinner";
+import { HomeVisitStatusBadge } from "@/components/status/StatusLabels";
 import { useAuthStore } from "@/stores/authStore";
+import { useToastStore } from "@/stores/toastStore";
+import { useCurrentLanguage } from "@/hooks/useAuth";
+import { getApiErrorMessage } from "@/lib/api";
+import { formatCalendarDate } from "@/lib/date";
+import { appointmentToday } from "@maasuraksha/shared";
+import type { HomeVisitActionInput } from "@/services/homeVisits";
 import {
   usePatients,
   useAppointments,
@@ -21,6 +30,11 @@ import {
   usePregnancyByPatient,
   useUpdateReferralStatus,
   useReadAlert,
+  useHomeVisits,
+  useScheduleHomeVisit,
+  useCompleteHomeVisit,
+  useCancelHomeVisit,
+  useEscalateHomeVisit,
 } from "@/hooks/queries";
 
 function formatDate(date?: string) {
@@ -124,65 +138,211 @@ export function ASHAHighRiskPage() {
   );
 }
 
+type VisitAction = "schedule" | "complete" | "cancel" | "escalate";
+
 export function ASHAHomeVisitsPage() {
   const { t } = useTranslation();
-  const patients = usePatients("", 100);
-  const appointments = useAppointments();
+  const lang = useCurrentLanguage();
+  const push = useToastStore((s) => s.push);
+  const [actionFor, setActionFor] = useState<{ visitId: string; action: VisitAction } | null>(null);
 
-  if (patients.isLoading) return <Spinner />;
+  const visits = useHomeVisits();
+  const schedule = useScheduleHomeVisit();
+  const complete = useCompleteHomeVisit();
+  const cancel = useCancelHomeVisit();
+  const escalate = useEscalateHomeVisit();
+  const pendingMutation = [schedule, complete, cancel, escalate].find((m) => m.isPending);
 
-  const patientNames = new Map(patients.data?.items?.map((p) => [p.id, p.name]) ?? []);
-  const today = new Date().toISOString().slice(0, 10);
-  const items = appointments.data?.items ?? [];
-  const todayVisits = items.filter((a) => a.date === today);
-  const upcomingVisits = items.filter((a) => a.date > today && (a.status === "scheduled" || a.status === "confirmed"));
+  const [scheduledDate, setScheduledDate] = useState(appointmentToday());
+  const [scheduledTime, setScheduledTime] = useState("10:00");
+  const [visitNotes, setVisitNotes] = useState("");
+  const [followUpNeeded, setFollowUpNeeded] = useState(false);
+  const [reason, setReason] = useState("");
+  const [formError, setFormError] = useState("");
+
+  if (visits.isLoading) return <Spinner />;
+
+  const openAction = (visitId: string, action: VisitAction) => {
+    setScheduledDate(appointmentToday());
+    setScheduledTime("10:00");
+    setVisitNotes("");
+    setFollowUpNeeded(false);
+    setReason("");
+    setFormError("");
+    setActionFor({ visitId, action });
+  };
+
+  const closeAction = () => {
+    if (pendingMutation) return;
+    setActionFor(null);
+    setFormError("");
+  };
+
+  const submitAction = () => {
+    if (!actionFor || pendingMutation) return;
+    const { visitId, action } = actionFor;
+
+    const mutation =
+      action === "schedule"
+        ? schedule
+        : action === "complete"
+          ? complete
+          : action === "cancel"
+            ? cancel
+            : escalate;
+
+    const successKey =
+      action === "schedule"
+        ? "asha.homeVisits.scheduled"
+        : action === "complete"
+          ? "asha.homeVisits.completed"
+          : action === "cancel"
+            ? "asha.homeVisits.cancelled"
+            : "asha.homeVisits.escalated";
+
+    const payload: HomeVisitActionInput = { visitId };
+    if (action === "schedule") {
+      if (!scheduledDate || !scheduledTime) {
+        setFormError(t("validation.required"));
+        return;
+      }
+      payload.scheduledDate = scheduledDate;
+      payload.scheduledTime = scheduledTime;
+      if (visitNotes.trim()) payload.visitNotes = visitNotes.trim();
+    } else if (action === "complete") {
+      if (visitNotes.trim()) payload.visitNotes = visitNotes.trim();
+      payload.followUpNeeded = followUpNeeded;
+    } else {
+      if (!reason.trim()) {
+        setFormError(t("validation.required"));
+        return;
+      }
+      if (action === "cancel") payload.cancelledReason = reason.trim();
+      else payload.reason = reason.trim();
+    }
+
+    mutation.mutate(payload, {
+      onSuccess: () => {
+        push(t(successKey), "success");
+        setActionFor(null);
+        setFormError("");
+      },
+      onError: (error) => setFormError(getApiErrorMessage(error)),
+    });
+  };
+
+  const items = visits.data?.items ?? [];
+
+  const submitLabel =
+    actionFor?.action === "schedule"
+      ? t("asha.homeVisits.scheduleSubmit")
+      : actionFor?.action === "complete"
+        ? t("asha.homeVisits.completeSubmit")
+        : actionFor?.action === "cancel"
+          ? t("asha.homeVisits.cancelSubmit")
+          : t("asha.homeVisits.escalateSubmit");
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("asha.dashboard.homeVisits") || "Home Visits"} subtitle="Scheduled visits derived from the patients' appointment records." />
-      <div className="grid gap-4 xl:grid-cols-2">
-        <Card title="Today">
-          {todayVisits.length === 0 ? (
-            <p className="text-sm text-gray-500">No visits scheduled for today.</p>
-          ) : (
-            <div className="space-y-3">
-              {todayVisits.map((visit) => (
-                <div key={visit.id} className="rounded-xl border border-rose-100 bg-white p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <Link to={`/asha/patients/${visit.patient}`} className="font-semibold text-gray-900 hover:text-primary-700">{patientNames.get(visit.patient) ?? visit.patient}</Link>
-                      <p className="text-xs text-gray-500">{visit.type} · {visit.time}</p>
+      <PageHeader title={t("asha.homeVisits.title")} subtitle={t("asha.homeVisits.subtitle")} />
+      {visits.isError ? (
+        <ErrorState message={visits.error?.message} onRetry={() => visits.refetch()} />
+      ) : items.length === 0 ? (
+        <Card>
+          <EmptyState title={t("asha.homeVisits.none")} description={t("asha.homeVisits.noneDescription")} />
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {items.map((visit) => (
+            <Card key={visit._id}>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Link to={`/asha/patients/${visit.patient}`} className="font-semibold text-gray-900 hover:text-primary-700">
+                      {visit.patientName ?? visit.patient}
+                    </Link>
+                    <HomeVisitStatusBadge status={visit.status} />
+                  </div>
+                  <p className="mt-1 text-sm font-medium text-gray-700">{visit.reason}</p>
+                  <p className="text-xs text-gray-500">
+                    {t("homeVisits.date")}: {formatCalendarDate(visit.preferredDate, lang)} · {t("homeVisits.time")}: {visit.preferredTime} {t("homeVisits.indiaTime")}
+                  </p>
+                  {visit.notes && <p className="mt-0.5 text-xs text-gray-400">{visit.notes}</p>}
+                  {visit.scheduledDate && visit.scheduledTime && (
+                    <p className="mt-0.5 text-xs text-gray-500">
+                      {t("asha.homeVisits.scheduledDate")}: {formatCalendarDate(visit.scheduledDate, lang)} · {visit.scheduledTime}
+                    </p>
+                  )}
+                </div>
+                {(visit.status === "pending" || visit.status === "scheduled") && (
+                  <div className="flex flex-wrap gap-2">
+                    {visit.status === "pending" && (
+                      <Button variant="primary" size="sm" onClick={() => openAction(visit._id, "schedule")}>
+                        {t("asha.homeVisits.schedule")}
+                      </Button>
+                    )}
+                    {visit.status === "scheduled" && (
+                      <Button variant="primary" size="sm" onClick={() => openAction(visit._id, "complete")}>
+                        {t("asha.homeVisits.complete")}
+                      </Button>
+                    )}
+                    <Button variant="outline" size="sm" onClick={() => openAction(visit._id, "cancel")}>
+                      {t("asha.homeVisits.cancel")}
+                    </Button>
+                    <Button variant="danger" size="sm" onClick={() => openAction(visit._id, "escalate")}>
+                      {t("asha.homeVisits.escalate")}
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {actionFor?.visitId === visit._id && (
+                <div className="mt-4 space-y-4 rounded-xl border border-rose-100 bg-rose-50/30 p-4">
+                  {actionFor.action === "schedule" && (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <Field label={t("asha.homeVisits.scheduledDate")} htmlFor="asha-schedule-date" required>
+                        <Input id="asha-schedule-date" type="date" min={appointmentToday()} value={scheduledDate} onChange={(event) => setScheduledDate(event.target.value)} />
+                      </Field>
+                      <Field label={t("asha.homeVisits.scheduledTime")} htmlFor="asha-schedule-time" required>
+                        <Input id="asha-schedule-time" type="time" value={scheduledTime} onChange={(event) => setScheduledTime(event.target.value)} />
+                      </Field>
                     </div>
-                    <StatusBadge status={visit.status} />
+                  )}
+                  {(actionFor.action === "schedule" || actionFor.action === "complete") && (
+                    <Field label={t("asha.homeVisits.visitNotesOptional")} htmlFor="asha-visit-notes">
+                      <Textarea id="asha-visit-notes" rows={2} maxLength={2000} value={visitNotes} onChange={(event) => setVisitNotes(event.target.value)} />
+                    </Field>
+                  )}
+                  {actionFor.action === "complete" && (
+                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                      <input type="checkbox" className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" checked={followUpNeeded} onChange={(event) => setFollowUpNeeded(event.target.checked)} />
+                      {t("asha.homeVisits.followUpNeeded")}
+                    </label>
+                  )}
+                  {(actionFor.action === "cancel" || actionFor.action === "escalate") && (
+                    <Field
+                      label={actionFor.action === "cancel" ? t("asha.homeVisits.cancelledReason") : t("asha.homeVisits.escalateReason")}
+                      htmlFor="asha-action-reason"
+                      required
+                    >
+                      <Textarea id="asha-action-reason" rows={3} maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} />
+                    </Field>
+                  )}
+                  {formError && <p role="alert" className="text-sm text-red-700">{formError}</p>}
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" onClick={closeAction} disabled={!!pendingMutation}>
+                      {t("asha.homeVisits.close")}
+                    </Button>
+                    <Button variant={actionFor.action === "escalate" ? "danger" : "primary"} size="sm" onClick={submitAction} loading={!!pendingMutation}>
+                      {submitLabel}
+                    </Button>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </Card>
-        <Card title="Upcoming">
-          {upcomingVisits.length === 0 ? (
-            <p className="text-sm text-gray-500">No upcoming visits.</p>
-          ) : (
-            <div className="space-y-3">
-              {upcomingVisits.slice(0, 10).map((visit) => (
-                <div key={visit.id} className="rounded-xl border border-rose-100 bg-white p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <Link to={`/asha/patients/${visit.patient}`} className="font-semibold text-gray-900 hover:text-primary-700">{patientNames.get(visit.patient) ?? visit.patient}</Link>
-                      <p className="text-xs text-gray-500">{visit.type} · {formatDate(visit.date)} · {visit.time}</p>
-                    </div>
-                    <StatusBadge status={visit.status} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-      </div>
-      <Card>
-        <p className="text-xs text-gray-500">Field home-visit reports are not captured yet; scheduled visits from the appointment records are shown above.</p>
-      </Card>
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

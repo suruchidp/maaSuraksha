@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { UserRole, Language, isFutureCalendarDate, RECOMMENDATION_CATEGORIES, RECOMMENDATION_PRIORITIES } from "@maasuraksha/shared";
+import { UserRole, Language, isFutureCalendarDate, validAppointmentDate, RECOMMENDATION_CATEGORIES, RECOMMENDATION_PRIORITIES } from "@maasuraksha/shared";
 import type { TFunction } from "i18next";
 
 /* i18n-aware Zod schemas that mirror the shared-package constraints.
@@ -168,6 +168,18 @@ export function buildSchemas(t: SchemaMessages) {
         .string()
         .max(1000, t("validation.maxLength", { n: 1000 }))
         .optional(),
+    }),
+
+    homeVisitRequest: z.object({
+      patient: z.string().regex(/^[a-fA-F0-9]{24}$/),
+      preferredDate: z
+        .string()
+        .min(1, t("validation.required"))
+        .refine((val) => validAppointmentDate(val), t("validation.invalidDate")),
+      preferredTime: z
+        .string()
+        .regex(/^([01]\d|2[0-3]):[0-5]\d$/, t("validation.invalidTime")),
+      reason: required().max(500, t("validation.maxLength", { n: 500 })),
     }),
 
     recommendation: z.object({

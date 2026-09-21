@@ -125,6 +125,38 @@ npm run lint           # Lint all packages
 npm run clean          # Clean build artifacts
 ```
 
+## Seed a Development Admin Account
+
+Public registration (`POST /api/v1/auth/register`) intentionally **never**
+allows `ADMIN` accounts — that behavior is unchanged. To create a development
+`ADMIN` in a local database, use the development-only helper
+`scripts/seed-admin.ts`:
+
+```bash
+# Via environment variables
+ADMIN_SEED_NAME="Dev Admin" \
+ADMIN_SEED_EMAIL=admin@example.com \
+ADMIN_SEED_PASSWORD='<your-secret>' \
+npm run seed:admin
+```
+
+```bash
+# Or via command-line flags (flags take precedence over env vars)
+npm run seed:admin -- --name "Dev Admin" --email admin@example.com --password '<your-secret>'
+```
+
+What it does and guarantees:
+
+- Connects using `MONGODB_URI` (from `.env` or your environment).
+- Reuses the existing `User` model, so the password is hashed with the same
+  bcrypt mechanism (12 rounds) used for normal users and satisfies the same
+  password policy (≥ 8 chars, upper + lower + digit).
+- Creates the account with `role=ADMIN` and `isActive=true`.
+- **Refuses** to create a duplicate `ADMIN` if one already exists and exits
+  with a non-zero code; it never overwrites or prints the password.
+- The script is **development-only**: it refuses to run against
+  `NODE_ENV=production` and must **never** be mounted as an API endpoint.
+
 ## Important Disclaimers
 
 - AI outputs are for **decision-support and educational purposes only**

@@ -160,6 +160,11 @@ export async function listAccessiblePatients(
   };
 }
 
+export async function listActiveDoctors(): Promise<{ id: string; name: string }[]> {
+  const doctors = await User.find({ role: UserRole.DOCTOR, isActive: true }).select("name").sort({ name: 1 });
+  return doctors.map((d) => ({ id: d._id.toString(), name: d.name }));
+}
+
 export async function createUserByAdmin(
   adminRole: UserRole,
   input: {

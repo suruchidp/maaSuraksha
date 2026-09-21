@@ -31,6 +31,9 @@ import {
 } from "@/services/dietGuidance";
 import { createAlert, listAlerts, updateAlertStatus } from "@/services/alerts";
 import { createReferral, listReferrals, updateReferralStatus } from "@/services/referrals";
+import { requestHomeVisit, listHomeVisits, scheduleHomeVisit, completeHomeVisit, cancelHomeVisit, escalateHomeVisit } from "@/services/homeVisits";
+import type { HomeVisitActionInput } from "@/services/homeVisits";
+import { listDoctors } from "@/services/users";
 import { createAppointment, listAppointments, updateAppointmentStatus, rescheduleAppointment } from "@/services/appointments";
 import { listEducation } from "@/services/education";
 import {
@@ -63,6 +66,7 @@ export const qk = {
   alerts: (userId?: string) => ["alerts", userId ?? "self"],
   referrals: ["referrals"],
   appointments: (patientId?: string) => ["appointments", patientId ?? "all"],
+  homeVisits: ["home-visits"],
   education: (params?: Record<string, unknown>) => ["education", params ?? {}],
   reports: ["reports"],
   patients: (search?: string) => ["patients", search ?? ""],
@@ -414,6 +418,14 @@ export function useUpdateAlertStatus() {
 }
 
 /* ---- Referrals ---- */
+export function useDoctors() {
+  return useQuery({
+    queryKey: ["users", "doctors"],
+    queryFn: () => listDoctors(),
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 export function useReferrals(patientId?: string, limit = 50) {
   return useQuery({
     queryKey: ["referrals", patientId ?? "all"],
@@ -438,6 +450,66 @@ export function useUpdateReferralStatus() {
       updateReferralStatus(id, status as never, note),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["referrals"] });
+    },
+  });
+}
+
+/* ---- Home Visits ---- */
+export function useHomeVisits(limit = 50) {
+  const actorId = useAuthStore(s => s.user?.id);
+  return useQuery({
+    queryKey: [...qk.homeVisits, actorId],
+    enabled: !!actorId,
+    queryFn: () => listHomeVisits({ page: 1, limit }),
+  });
+}
+
+export function useRequestHomeVisit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: import("@/services/homeVisits").HomeVisitRequestInput) => requestHomeVisit(input),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["home-visits"] });
+    },
+  });
+}
+
+export function useScheduleHomeVisit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: HomeVisitActionInput) => scheduleHomeVisit(input),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["home-visits"] });
+    },
+  });
+}
+
+export function useCompleteHomeVisit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: HomeVisitActionInput) => completeHomeVisit(input),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["home-visits"] });
+    },
+  });
+}
+
+export function useCancelHomeVisit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: HomeVisitActionInput) => cancelHomeVisit(input),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["home-visits"] });
+    },
+  });
+}
+
+export function useEscalateHomeVisit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: HomeVisitActionInput) => escalateHomeVisit(input),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["home-visits"] });
     },
   });
 }

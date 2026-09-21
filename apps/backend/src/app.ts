@@ -24,12 +24,14 @@ import dietPlanRoutes from "./routes/dietPlans";
 import dietGuidanceRoutes from "./routes/dietGuidance";
 import alertRoutes from "./routes/alerts";
 import referralRoutes from "./routes/referrals";
+import homeVisitRoutes from "./routes/homeVisits";
 import appointmentRoutes from "./routes/appointments";
 import educationRoutes from "./routes/education";
 import chatRoutes from "./routes/chat";
 import reportRoutes from "./routes/reports";
 import adminRoutes from "./routes/admin";
 import patientRoutes from "./routes/patients";
+import userRoutes from "./routes/users";
 
 const app = express();
 
@@ -69,6 +71,7 @@ app.use("/api/v1/diet-plans", dietPlanRoutes);
 app.use("/api/v1/diet-guidance", dietGuidanceRoutes);
 app.use("/api/v1/alerts", alertRoutes);
 app.use("/api/v1/referrals", referralRoutes);
+app.use("/api/v1/home-visits", homeVisitRoutes);
 app.use("/api/v1/appointments", appointmentRoutes);
 app.use("/api/v1/education", educationRoutes);
 app.use("/api/v1/chat", chatRoutes);
@@ -76,6 +79,7 @@ app.use("/api/v1/reports", reportRoutes);
 app.use("/api/v1/health-records", healthRecordRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/patients", patientRoutes);
+app.use("/api/v1/users", userRoutes);
 
 app.get("/", (_req, res) => {
   res.json({

@@ -10,6 +10,5 @@ export async function healthCheck(_req: Request, res: Response): Promise<void> {
     version: "1.0.0",
     uptime,
     timestamp,
-    environment: process.env.NODE_ENV || "development",
   });
 }

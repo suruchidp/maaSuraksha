@@ -49,8 +49,8 @@ class MaternalRiskInput(BaseModel):
         description="Blood glucose (mg/dL, external) — converted to mmol/L before inference",
     )
     body_temp: float = Field(
-        ge=35,
-        le=42,
+        ge=33,
+        le=43,
         description="Body temperature (°C, external) — converted to °F before inference",
     )
     heart_rate: float = Field(ge=30, le=250, description="Heart rate (bpm)")

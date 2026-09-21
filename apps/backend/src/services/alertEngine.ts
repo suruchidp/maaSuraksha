@@ -1,4 +1,4 @@
-import { pregnancyAge, PREGNANCY_MILESTONES } from "@maasuraksha/shared";
+import { pregnancyAge, PREGNANCY_MILESTONES, AlertSeverity } from "@maasuraksha/shared";
 import { Symptom } from "../models/Symptom";
 import { symptomTriage } from "@maasuraksha/shared";
 import { Alert } from "../models/Alert";
@@ -6,8 +6,9 @@ import { HealthMetric } from "../models/HealthMetric";
 import { PregnancyProfile } from "../models/PregnancyProfile";
 import { MaternalRiskAssessment } from "../models/MaternalRiskAssessment";
 import { GDMAssessment } from "../models/GDMAssessment";
+import { PPDAssessment } from "../models/PPDAssessment";
+import { MoodEntry } from "../models/MoodEntry";
 import { Appointment } from "../models/Appointment";
-import { AlertSeverity } from "@maasuraksha/shared";
 
 export interface Signal {
  rule: string; type: string; severity: AlertSeverity; title: string; message: string; key: string;
@@ -18,6 +19,8 @@ export interface AlertContext {
  pregnancy?: { _id: unknown; expectedDueDate: Date; isHighRisk: boolean; lmp?: Date; status?: string; milestoneCompletions?: {key:string}[] } | null;
  maternal?: { _id: unknown; status: string; riskLevel?: string } | null;
  gdm?: { _id: unknown; status: string; riskLevel?: string } | null;
+ ppd?: { _id: unknown; status: string; severity?: string } | null;
+ mood?: { _id: unknown; createdAt: Date; safetyFlag: boolean } | null;
  symptoms?: { _id: unknown; date: Date; symptoms: string[]; severity: string }[];
  appointments?: { _id: unknown; date: Date; time: string; status: string; scheduleVersion?: number }[];
 }
@@ -56,6 +59,20 @@ export function evaluateAlerts(ctx: AlertContext, now = new Date()): Signal[] {
    if(dating.weeks>=m.fromWeek && dating.weeks<=m.toWeek && !pregnancy.milestoneCompletions?.some(c=>c.key===m.key)) add('pregnancy-milestone','follow_up',AlertSeverity.INFO,'Pregnancy care milestone',`Review ${m.key.replace(/_/g,' ')} with your care team. This is a planning reminder; individual care schedules may differ. See Pregnancy Tracking.`,`milestone:${cycle}:${m.key}`);
   }
  }
+ // PPD screening result (completed model severity only; pending stays silent).
+ if (ctx.ppd?.status === 'completed' && (ctx.ppd.severity === 'moderate' || ctx.ppd.severity === 'severe')) {
+  add('ppd-risk', 'assessment', ctx.ppd.severity === 'severe' ? AlertSeverity.URGENT : AlertSeverity.WARNING,
+   'Perinatal mental health follow-up',
+   `Your completed perinatal depression screening reports ${ctx.ppd.severity === 'severe' ? 'a severe' : 'moderate'} result. ${ctx.ppd.severity === 'severe' ? 'Contact your care team promptly.' : 'Arrange a review with your care team.'} A screening result is not a diagnosis.`,
+   `ppd:${ctx.ppd._id}:${ctx.ppd.severity}`);
+ }
+ // Mood safety flag (recent analyzed journal entry). The alert never quotes the
+ // journal text: it is a notice that the entry triggered the safety heuristic.
+ if (ctx.mood?.safetyFlag && now.getTime() - ctx.mood.createdAt.getTime() <= 86400000) {
+  add('mood-safety', 'mood_safety', AlertSeverity.URGENT, 'Mood safety review suggested',
+   'A recent journal entry was flagged for safety review. Please reach out to your care team or a trusted person now, or contact emergency services if you need immediate help. This is text screening, not a diagnosis.',
+   `mood-safety:${ctx.mood._id}`);
+ }
  for (const appointment of ctx.appointments ?? []) {
   const time = new Date(`${appointment.date.toISOString().slice(0,10)}T${appointment.time}:00+05:30`);
   const remaining = time.getTime() - now.getTime();
@@ -70,13 +87,15 @@ export function evaluateAlerts(ctx: AlertContext, now = new Date()): Signal[] {
  return signals;
 }
 export async function refreshPatientAlerts(user: string, now = new Date()) {
- const [metric, pregnancy, maternal, gdm, appointments, symptoms] = await Promise.all([
+ const [metric, pregnancy, maternal, gdm, ppd, mood, appointments, symptoms] = await Promise.all([
   HealthMetric.findOne({ user }).sort({ date: -1 }), PregnancyProfile.findOne({ user }),
   MaternalRiskAssessment.findOne({ user }).sort({ createdAt: -1 }), GDMAssessment.findOne({ user }).sort({ createdAt: -1 }),
+  PPDAssessment.findOne({ user }).sort({ createdAt: -1 }),
+  MoodEntry.findOne({ user, safetyFlag: true }).sort({ createdAt: -1 }),
   Appointment.find({ patient: user, status: { $in: ['scheduled','confirmed'] }, date: { $gte: new Date(now.getTime()-86400000), $lte: new Date(now.getTime()+2*86400000) } }),
   Symptom.find({ user, date: { $gte: new Date(now.getTime()-86400000), $lte: now } })
  ]);
- for (const signal of evaluateAlerts({ user, metric, pregnancy, maternal, gdm, appointments, symptoms }, now)) {
+ for (const signal of evaluateAlerts({ user, metric, pregnancy, maternal, gdm, ppd, mood, appointments, symptoms }, now)) {
   try {
    await Alert.updateOne({ user, dedupeKey: signal.key }, { $setOnInsert: { user, dedupeKey: signal.key, type: signal.type, severity: signal.severity, title: signal.title, message: signal.message, source: `rules-v1:${signal.rule}` } }, { upsert: true });
    await Alert.updateOne({user,dedupeKey:signal.key,status:'resolved',resolvedByEngine:true},{$set:{status:'pending',resolvedByEngine:false},$unset:{readAt:1}});

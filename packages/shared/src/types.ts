@@ -50,6 +50,14 @@ export enum ReferralStatus {
   REJECTED = "rejected",
 }
 
+export enum HomeVisitStatus {
+  PENDING = "pending",
+  SCHEDULED = "scheduled",
+  COMPLETED = "completed",
+  CANCELLED = "cancelled",
+  ESCALATED = "escalated",
+}
+
 export enum AppointmentStatus {
   SCHEDULED = "scheduled",
   CONFIRMED = "confirmed",
@@ -191,6 +199,7 @@ export interface PPDAssessment {
   user: string;
   assessedBy: string;
   status: "pending" | "completed" | "unavailable";
+  edinburghAnswers?: number[];
   edinburghScore?: number;
   severity?: PPDSeverity;
   riskFactors: string[];
@@ -321,12 +330,46 @@ export interface Referral {
   patient: string;
   referredBy: string;
   referredTo?: string;
+  referredToName?: string;
   facility?: string;
   reason: string;
   notes?: string;
   status: ReferralStatus;
   history?: {
     status: ReferralStatus;
+    changedBy: string;
+    changedAt: string;
+    note?: string;
+  }[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HomeVisit {
+  _id: string;
+  patient: string;
+  patientName?: string;
+  requestedBy: string;
+  reason: string;
+  notes?: string;
+  preferredDate: string;
+  preferredTime: string;
+  status: HomeVisitStatus;
+  scheduledDate?: string;
+  scheduledTime?: string;
+  scheduledBy?: string;
+  completedAt?: string;
+  completedBy?: string;
+  visitNotes?: string;
+  followUpNeeded?: boolean;
+  measurementIds?: string[];
+  referralId?: string;
+  result?: Record<string, number>;
+  outcome?: ReferralStatus | "none";
+  visitRecordId?: string;
+  lastMessage?: string;
+  history?: {
+    status: HomeVisitStatus;
     changedBy: string;
     changedAt: string;
     note?: string;

@@ -23,7 +23,6 @@ export type { IAlertDocument } from "./Alert";
 export { Referral } from "./Referral";
 export type { IReferralDocument } from "./Referral";
 export { Appointment } from "./Appointment";
-export type { IAppointmentDocument } from "./Appointment";
 export { EducationalContent } from "./EducationalContent";
 export type { IEducationalContentDocument } from "./EducationalContent";
 export { ChatConversation } from "./ChatConversation";

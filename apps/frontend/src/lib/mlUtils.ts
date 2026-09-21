@@ -151,3 +151,22 @@ export const GDM_IMPUTATION_DEFAULTS: Readonly<{
 export function getGDMImputationValue(shapKey: string): number | undefined {
   return GDM_IMPUTATION_DEFAULTS.values[shapKey];
 }
+
+/* ---------------------------------------------------------------- *
+ * Configured GDM screening threshold.
+ *
+ * Mirrored from apps/ml-service/artifacts/gdm/metadata.json ->
+ * `thresholds.positive`: a model probability at or above this value is
+ * flagged as a positive screen (risk level "high") by the serving layer.
+ * Like GDM_IMPUTATION_DEFAULTS, the value is pinned to the model version it
+ * was read from so the UI only displays it when the served modelVersion
+ * matches — otherwise showing it would claim a threshold for a different
+ * (e.g. retrained) model.
+ * ---------------------------------------------------------------- */
+export const GDM_SCREENING_THRESHOLD: Readonly<{
+  modelVersion: string;
+  positive: number;
+}> = {
+  modelVersion: "20260916T065854Z",
+  positive: 0.05,
+};

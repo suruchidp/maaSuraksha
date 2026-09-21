@@ -1,4 +1,4 @@
-export { UserRole, Language, Trimester, RiskLevel, AlertSeverity, AlertStatus, ReferralStatus, AppointmentStatus, MoodSentiment, PPDSeverity, GDMRisk } from "./types";
+export { UserRole, Language, Trimester, RiskLevel, AlertSeverity, AlertStatus, ReferralStatus, HomeVisitStatus, AppointmentStatus, MoodSentiment, PPDSeverity, GDMRisk } from "./types";
 export type {
   User,
   PregnancyProfile,
@@ -14,6 +14,7 @@ export type {
   DietGuidance,
   Alert,
   Referral,
+  HomeVisit,
   Appointment,
   EducationalContent,
   ChatConversation,
@@ -38,6 +39,9 @@ export {
   chatMessageSchema,
   educationalContentSchema,
   referralSchema,
+  homeVisitRequestSchema,
+  homeVisitActionSchema,
+  homeVisitEscalateSchema,
   maternalRiskAssessmentSchema,
   gdmAssessmentSchema,
   ppdAssessmentSchema,

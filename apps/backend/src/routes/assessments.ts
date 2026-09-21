@@ -15,6 +15,7 @@ import { validate } from "../middleware/validate";
 import {
   maternalRiskAssessmentSchema,
   gdmAssessmentSchema,
+  ppdAssessmentSchema,
 } from "@maasuraksha/shared";
 
 const router = Router();
@@ -33,7 +34,7 @@ router.post("/gdm", validate(gdmAssessmentSchema), createGDMController);
 router.get("/gdm", listGDMController);
 router.get("/gdm/latest/:userId", latestGDMController);
 
-router.post("/ppd", createPPDController);
+router.post("/ppd", validate(ppdAssessmentSchema), createPPDController);
 router.get("/ppd", listPPDController);
 router.get("/ppd/latest/:userId", latestPPDController);
 

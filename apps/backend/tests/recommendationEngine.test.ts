@@ -316,6 +316,37 @@ describe("recommendation engine — persistence", () => {
     }
   });
 
+  it("never pairs systolic and diastolic readings from different metric records", async () => {
+    const userId = new mongoose.Types.ObjectId();
+    await HealthMetric.create({
+      user: userId,
+      date: new Date(Date.now() - 2 * 86400000),
+      systolicBP: 165,
+    });
+    await HealthMetric.create({
+      user: userId,
+      date: new Date(),
+      diastolicBP: 95,
+    });
+    expect(await generateAndPersistForUser(String(userId))).toBe(0);
+    expect(await Recommendation.countDocuments({ user: userId })).toBe(0);
+  });
+
+  it("emits the blood pressure recommendation from a single metric record only", async () => {
+    const userId = new mongoose.Types.ObjectId();
+    await HealthMetric.create({
+      user: userId,
+      date: new Date(),
+      systolicBP: 150,
+      diastolicBP: 96,
+    });
+    expect(await generateAndPersistForUser(String(userId))).toBe(1);
+    const recs = await Recommendation.find({ user: userId, sourceType: "SYSTEM" }).lean();
+    expect(recs[0].templateKey).toBe("metric-bp-high");
+    expect(recs[0].content).toContain("150");
+    expect(recs[0].content).toContain("96");
+  });
+
   it("keeps PPD results out unless the assessment is completed (mood data ignored)", async () => {
     const userId = new mongoose.Types.ObjectId();
     const pending = await PPDAssessment.create({

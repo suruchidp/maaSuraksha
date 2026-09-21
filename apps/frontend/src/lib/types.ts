@@ -10,6 +10,7 @@ import {
   AlertStatus,
   ReferralStatus,
   AppointmentStatus,
+  HomeVisitStatus,
   DietMealPreference,
   DietRegion,
 } from "@maasuraksha/shared";
@@ -155,7 +156,7 @@ export interface PPDAssessmentDTO {
   };
   recommendations: string[];
   modelVersion?: string;
-  edinburghAnswersSubmitted?: number[];
+  edinburghAnswers?: number[];
   createdAt: string;
   updatedAt: string;
   message?: string;
@@ -282,6 +283,7 @@ export interface ReferralDTO {
   patient: string;
   referredBy: string;
   referredTo?: string;
+  referredToName?: string;
   facility?: string;
   reason: string;
   notes?: string;
@@ -312,6 +314,38 @@ export interface AppointmentDTO {
   status: AppointmentStatus;
   notes?: string;
   cancelledReason?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HomeVisitDTO {
+  _id: string;
+  patient: string;
+  patientName?: string;
+  requestedBy: string;
+  reason: string;
+  notes?: string;
+  preferredDate: string;
+  preferredTime: string;
+  status: HomeVisitStatus;
+  scheduledDate?: string;
+  scheduledTime?: string;
+  scheduledBy?: string;
+  completedAt?: string;
+  completedBy?: string;
+  visitNotes?: string;
+  followUpNeeded?: boolean;
+  result?: Record<string, number>;
+  referralId?: string;
+  escalatedTo?: string;
+  escalateReason?: string;
+  cancelledReason?: string;
+  history?: {
+    status: HomeVisitStatus;
+    changedBy?: string;
+    changedAt?: string;
+    note?: string;
+  }[];
   createdAt: string;
   updatedAt: string;
 }

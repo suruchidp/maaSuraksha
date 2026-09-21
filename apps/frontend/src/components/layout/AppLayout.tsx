@@ -23,6 +23,7 @@ import {
   AlertTriangle,
   Clock3,
   UserCog,
+  HousePlus,
 } from "lucide-react";
 import { useAuthStore, normalizeUserRole } from "@/stores/authStore";
 import { useAuth } from "@/hooks/useAuth";
@@ -56,6 +57,7 @@ export const DOCTOR_NAV_ITEMS: NavItem[] = [
 export const ASHA_NAV_ITEMS: NavItem[] = [
   { to: "/asha/dashboard", labelKey: "nav.dashboard", icon: <LayoutDashboard className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
   { to: "/asha/patients", labelKey: "nav.assignedWomen", icon: <Users className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
+  { to: "/asha/home-visits", labelKey: "nav.homeVisits", icon: <HousePlus className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
   { to: "/asha/follow-ups", labelKey: "nav.followUps", icon: <Clock3 className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
   { to: "/asha/referrals", labelKey: "nav.referrals", icon: <AlertTriangle className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
   { to: "/asha/profile", labelKey: "nav.profile", icon: <UserCog className="w-5 h-5" />, roles: ["ASHA" as UserRole] },
@@ -72,6 +74,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/patient/diet", labelKey: "nav.dietGuidance", icon: <FileText className="w-5 h-5" />, roles: ["PATIENT" as UserRole] },
   { to: "/patient/alerts", labelKey: "nav.alerts", icon: <Bell className="w-5 h-5" />, roles: ["PATIENT" as UserRole] },
   { to: "/patient/appointments", labelKey: "nav.appointments", icon: <Calendar className="w-5 h-5" />, roles: ["PATIENT" as UserRole] },
+  { to: "/patient/home-visits", labelKey: "nav.homeVisits", icon: <HousePlus className="w-5 h-5" />, roles: ["PATIENT" as UserRole] },
   { to: "/patient/referrals", labelKey: "nav.referrals", icon: <ClipboardList className="w-5 h-5" />, roles: ["PATIENT" as UserRole] },
   { to: "/patient/education", labelKey: "nav.education", icon: <BookOpen className="w-5 h-5" />, roles: ["PATIENT" as UserRole] },
   { to: "/patient/chat", labelKey: "nav.chatbot", icon: <Bot className="w-5 h-5" />, roles: ["PATIENT" as UserRole] },

@@ -252,19 +252,39 @@ export async function createPPDAssessment(
   const allowed = await getAccessiblePatientIds(actor);
   const userId = resolveTargetPatient(actor, targetUserId, allowed);
 
+  // EPDS score is the direct sum of the 10 answered items (each 0..3). It is
+  // derived from the submitted answers, not invented by a model, so it is
+  // stored even when ML severity classification is unavailable.
+  const edinburghScore =
+    input.edinburghAnswers && input.edinburghAnswers.length === 10
+      ? input.edinburghAnswers.reduce((sum, n) => sum + Number(n), 0)
+      : undefined;
+
   const assessment = await PPDAssessment.create({
     user: userId,
     assessedBy: actor.userId,
     status: "pending",
     riskFactors: [],
     recommendations: [],
+    edinburghAnswers: input.edinburghAnswers,
+    edinburghScore,
     screeningText: input.screeningText,
   });
 
   if (input.screeningText) {
     const ml = await predictPPD(input.screeningText, "en");
     if (ml.available) {
-      const severity = ml.riskLevel as PPDSeverity;
+      // The PPD classifier is a binary screen (positive_screen | negative_screen).
+      // Translate it deterministically into the shared PPDSeverity enum instead of
+      // storing the ML "risk_level" verbatim (high | low), which is not a valid
+      // member of PPDSeverity. A positive screen plus an EPDS score >= 13 is the
+      // classic "probable depression" band; anything lower is moderate triage.
+      const severity: PPDSeverity =
+        ml.prediction === "positive_screen"
+          ? (edinburghScore ?? 0) >= 13
+            ? PPDSeverity.SEVERE
+            : PPDSeverity.MODERATE
+          : PPDSeverity.NONE;
       await PPDAssessment.updateOne(
         { _id: assessment._id },
         {
@@ -297,7 +317,6 @@ export async function createPPDAssessment(
       const updated = await PPDAssessment.findById(assessment._id);
       return {
         ...toPPDDto(updated ?? assessment),
-        edinburghAnswersSubmitted: input.edinburghAnswers ?? [],
         message: `PPD screening completed by the ML service (model ${ml.modelVersion}).`,
       };
     }
@@ -305,7 +324,6 @@ export async function createPPDAssessment(
 
   return {
     ...toPPDDto(assessment),
-    edinburghAnswersSubmitted: input.edinburghAnswers ?? [],
     message: UNAVAILABLE_MESSAGE,
   };
 }
@@ -413,6 +431,7 @@ function toPPDDto(a: InstanceType<typeof PPDAssessment>) {
     user: a.user,
     assessedBy: a.assessedBy,
     status: a.status,
+    edinburghAnswers: a.edinburghAnswers,
     edinburghScore: a.edinburghScore,
     severity: a.severity,
     riskFactors: a.riskFactors,

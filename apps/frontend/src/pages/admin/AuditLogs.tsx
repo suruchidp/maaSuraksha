@@ -51,7 +51,7 @@ export default function AdminAuditLogsPage() {
                       <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">{log.action}</span>
                     </td>
                     <td className="py-2 pr-3 text-gray-600">{log.resource}</td>
-                    <td className="py-2 text-gray-400 text-xs">{log.resourceId ?? "â€”"}</td>
+                    <td className="py-2 text-gray-400 text-xs">{log.resourceId ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>

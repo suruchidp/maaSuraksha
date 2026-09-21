@@ -122,6 +122,51 @@ export const referralSchema = z.object({
   notes: z.string().max(1000).optional(),
 });
 
+export const homeVisitRequestSchema = z
+  .object({
+    patient: z.string().regex(/^[a-fA-F0-9]{24}$/, "Invalid patient ID"),
+    preferredDate: z.string().refine((val) => validAppointmentDate(val), "Invalid preferred date"),
+    preferredTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Time must be in HH:MM format"),
+    reason: z.string().trim().min(1, "Reason is required").max(500),
+    notes: z.string().trim().max(1000).optional(),
+  })
+  .strict();
+
+export const homeVisitActionSchema = z
+  .object({
+    status: z.enum(["scheduled", "completed", "cancelled"]),
+    scheduledDate: z.string().refine((val) => validAppointmentDate(val), "Invalid date").optional(),
+    scheduledTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Time must be in HH:MM format").optional(),
+    visitNotes: z.string().trim().max(2000).optional(),
+    followUpNeeded: z.boolean().optional(),
+    result: z.record(z.number()).optional(),
+    cancelledReason: z.string().trim().max(500).optional(),
+  })
+  .strict()
+  .superRefine((v, ctx) => {
+    if (v.status === "scheduled" && (!v.scheduledDate || !v.scheduledTime)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "scheduledDate and scheduledTime are required to schedule",
+        path: ["scheduledDate"],
+      });
+    }
+    if (v.status === "cancelled" && !v.cancelledReason) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "cancelledReason is required to cancel",
+        path: ["cancelledReason"],
+      });
+    }
+  });
+
+export const homeVisitEscalateSchema = z
+  .object({
+    reason: z.string().trim().min(1, "Reason is required").max(1000),
+    notes: z.string().trim().max(1000).optional(),
+  })
+  .strict();
+
 // Maternal risk inputs use APPLICATION / EXTERNAL units: bloodSugar in mg/dL
 // and bodyTemp in degrees Celsius. The ML service converts these to the
 // saved UCI model's INTERNAL units (mmol/L and °F) once at the model-input

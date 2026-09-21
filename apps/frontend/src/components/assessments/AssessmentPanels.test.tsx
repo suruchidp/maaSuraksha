@@ -382,3 +382,66 @@ describe('Maternal risk pregnancy dating integration',()=>{
   mocks.usePregnancy.mockReturnValue({data:{gestationalWeek:24,status:'active'}});const view=render(<MaternalRiskPanel userId="u1"/>);const field=screen.getByLabelText(/Gestational Week/);await userEvent.clear(field);await userEvent.type(field,'25');mocks.usePregnancy.mockReturnValue({data:{gestationalWeek:26,status:'active'}});view.rerender(<MaternalRiskPanel userId="u1"/>);expect(field).toHaveValue(25);
  });
 });
+
+describe("AssessmentPanels GDM result wording", () => {
+  beforeEach(() => {
+    mockDefaults();
+  });
+
+  const completedResult = (overrides: Record<string, unknown>) => ({
+    data: {
+      id: "a1",
+      user: "u1",
+      assessedBy: "u1",
+      status: "completed",
+      riskLevel: "high",
+      riskScore: 0.87,
+      riskFactors: ["Positive GDM risk screening (model)"],
+      recommendations: [],
+      modelVersion: "20260916T065854Z",
+      inputFeatures: { age: 25 },
+      shapValues: {},
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      ...overrides,
+    },
+    isPending: false,
+  });
+
+  it("shows a Screening Positive headline with the dynamic score and threshold, not the raw score as the diagnosis", () => {
+    mocks.useCreateGDM.mockReturnValue(completedResult({}));
+    render(<GDMPanel userId="u1" />);
+
+    expect(screen.getByText("High Risk / Screening Positive")).toBeInTheDocument();
+    expect(screen.getByText(/Model screening score/)).toBeInTheDocument();
+    expect(screen.getByText("87%")).toBeInTheDocument();
+    expect(screen.getByText(/Screening threshold/)).toBeInTheDocument();
+    expect(screen.getByText("5%")).toBeInTheDocument();
+    expect(screen.getByText(/above the screening threshold/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/not a diagnosis and it is not a literal individualized medical probability/)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/\(87%\)/)).not.toBeInTheDocument();
+  });
+
+  it("shows a Screening Negative result when the model does not flag the case", () => {
+    mocks.useCreateGDM.mockReturnValue(
+      completedResult({ riskLevel: "low", riskScore: 0.02, riskFactors: [] })
+    );
+    render(<GDMPanel userId="u1" />);
+
+    expect(screen.getByText("Screening Negative")).toBeInTheDocument();
+    expect(screen.getByText(/at or below the screening threshold/)).toBeInTheDocument();
+  });
+
+  it("keeps the score but drops the threshold line when the served model version is not the mirrored metadata", () => {
+    mocks.useCreateGDM.mockReturnValue(completedResult({ modelVersion: "20270101T000000Z" }));
+    render(<GDMPanel userId="u1" />);
+
+    expect(screen.getByText("High Risk / Screening Positive")).toBeInTheDocument();
+    expect(screen.getByText(/Model screening score/)).toBeInTheDocument();
+    expect(screen.getByText("87%")).toBeInTheDocument();
+    expect(screen.queryByText(/Screening threshold/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/above the screening threshold/)).not.toBeInTheDocument();
+  });
+});

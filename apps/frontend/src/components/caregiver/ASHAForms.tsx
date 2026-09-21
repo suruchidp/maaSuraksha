@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCreateHealthMetric, useCreateAlert, useCreateReferral, useCreateAppointment } from "@/hooks/queries";
+import { useCreateHealthMetric, useCreateAlert, useCreateReferral, useCreateAppointment, useDoctors } from "@/hooks/queries";
 import { buildSchemas } from "@/lib/schemas";
 import { getApiErrorMessage } from "@/lib/api";
 import { useToastStore } from "@/stores/toastStore";
@@ -149,7 +149,7 @@ export function ASHAlertForm({ patientId }: { patientId: string }) {
           create.mutate(
             {
               user: patientId,
-              type: "caregiver",
+              type: "follow_up",
               severity: data.severity,
               title: data.title,
               message: data.message,
@@ -191,6 +191,7 @@ export function ReferralForm({ patientId }: { patientId: string }) {
   const push = useToastStore((s) => s.push);
   const schemas = buildSchemas(t);
   const create = useCreateReferral();
+  const doctors = useDoctors();
   const {
     register,
     handleSubmit,
@@ -225,8 +226,13 @@ export function ReferralForm({ patientId }: { patientId: string }) {
         className="space-y-3"
         noValidate
       >
-        <Field label={t("referrals.referredTo")} htmlFor="r-to" error={errors.notes?.message}>
-          <Input id="r-to" {...register("referredTo")} placeholder={t("referrals.referredToPlaceholder")} />
+        <Field label={t("referrals.referredTo")} htmlFor="r-to" error={errors.referredTo?.message}>
+          <Select id="r-to" {...register("referredTo")} disabled={doctors.isLoading}>
+            <option value="">{t("referrals.referredToNone")}</option>
+            {(doctors.data ?? []).map((d) => (
+              <option key={d.id} value={d.id}>{d.name}</option>
+            ))}
+          </Select>
         </Field>
         <Field label={t("referrals.facility")} htmlFor="r-facility">
           <Input id="r-facility" {...register("facility")} />

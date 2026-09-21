@@ -22,6 +22,6 @@ router.post(
 );
 router.get("/", listController);
 router.get("/:id", getByIdController);
-router.patch("/:id/status", updateStatusController);
+router.patch("/:id/status", authorize(UserRole.DOCTOR, UserRole.ASHA, UserRole.ADMIN), updateStatusController);
 
 export default router;

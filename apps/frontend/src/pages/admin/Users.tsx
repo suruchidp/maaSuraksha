@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UserRole, Language } from "@maasuraksha/shared";
@@ -110,8 +110,8 @@ export default function AdminUsersPage() {
           <Field label={t("auth.language")} htmlFor="u-language">
             <Select id="u-language" {...register("language")}>
               <option value={Language.EN}>English</option>
-              <option value={Language.HI}>à¤¹à¤¿à¤¨à¥à¤¦à¥€</option>
-              <option value={Language.KN}>à²•à²¨à³à²¨à²¡</option>
+              <option value={Language.HI}>हिन्दी</option>
+              <option value={Language.KN}>ಕನ್ನಡ</option>
             </Select>
           </Field>
           <div className="col-span-2 lg:col-span-3">
@@ -217,6 +217,13 @@ function EditUserModal({
   const [active, setActive] = useState<boolean>(user?.isActive ?? true);
   const [asha, setAsha] = useState<string>(user?.assignedASHA ?? "");
   const [doctor, setDoctor] = useState<string>(user?.assignedDoctor ?? "");
+
+  useEffect(() => {
+    setRole(user?.role ?? UserRole.PATIENT);
+    setActive(user?.isActive ?? true);
+    setAsha(user?.assignedASHA ?? "");
+    setDoctor(user?.assignedDoctor ?? "");
+  }, [user]);
 
   if (!user) return null;
   const isPatient = role === UserRole.PATIENT;

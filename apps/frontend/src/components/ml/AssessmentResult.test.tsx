@@ -49,4 +49,62 @@ describe("AssessmentResult", () => {
     render(<AssessmentResult title="PPD Screening" status="completed" riskLevel="low" riskScore={0.1} />);
     expect(screen.getByText(/not a medical diagnosis/i)).toBeInTheDocument();
   });
+
+  it("GDM screening positive: headline, dynamic score, threshold, explanation and disclaimer replace the numeric score as the primary result", () => {
+    render(
+      <AssessmentResult
+        title="GDM Risk Assessment Result"
+        status="completed"
+        riskLevel="high"
+        riskScore={0.75}
+        screening={{ positive: true, score: 0.75, threshold: 0.05 }}
+      />
+    );
+
+    expect(screen.getByText("High Risk / Screening Positive")).toBeInTheDocument();
+    expect(screen.getByText(/Model screening score/)).toBeInTheDocument();
+    expect(screen.getByText("75%")).toBeInTheDocument();
+    expect(screen.getByText(/Screening threshold/)).toBeInTheDocument();
+    expect(screen.getByText("5%")).toBeInTheDocument();
+    expect(screen.getByText(/above the screening threshold/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/not a diagnosis and it is not a literal individualized medical probability/)
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Risk level")).not.toBeInTheDocument();
+    expect(screen.queryByText("high")).not.toBeInTheDocument();
+  });
+
+  it("GDM screening negative: headline and below-threshold explanation", () => {
+    render(
+      <AssessmentResult
+        title="GDM Risk Assessment Result"
+        status="completed"
+        riskLevel="low"
+        riskScore={0.02}
+        screening={{ positive: false, score: 0.02, threshold: 0.05 }}
+      />
+    );
+
+    expect(screen.getByText("Screening Negative")).toBeInTheDocument();
+    expect(screen.getByText(/at or below the screening threshold/)).toBeInTheDocument();
+    expect(screen.queryByText("Screening Positive")).not.toBeInTheDocument();
+  });
+
+  it("GDM screening without known model metadata: shows the score but not a threshold", () => {
+    render(
+      <AssessmentResult
+        title="GDM Risk Assessment Result"
+        status="completed"
+        riskLevel="high"
+        riskScore={0.87}
+        screening={{ positive: true, score: 0.87 }}
+      />
+    );
+
+    expect(screen.getByText("High Risk / Screening Positive")).toBeInTheDocument();
+    expect(screen.getByText(/Model screening score/)).toBeInTheDocument();
+    expect(screen.getByText("87%")).toBeInTheDocument();
+    expect(screen.queryByText(/Screening threshold/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/above the screening threshold/)).not.toBeInTheDocument();
+  });
 });

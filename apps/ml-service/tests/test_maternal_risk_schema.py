@@ -197,6 +197,34 @@ def test_no_synthetic_values_generated():
     assert float(out.loc[2, "heart_rate"]) == 99.0
 
 
+def _valid_maternal_input(body_temp: float):
+    from app.schemas.schemas import MaternalRiskInput
+
+    return MaternalRiskInput(
+        age=28,
+        systolic_bp=120,
+        diastolic_bp=80,
+        blood_sugar=90,
+        body_temp=body_temp,
+        heart_rate=72,
+        bmi=22,
+        gestational_week=20,
+    )
+
+
+@pytest.mark.parametrize("body_temp", [33.0, 36.0, 38.5, 43.0])
+def test_body_temp_request_boundaries_accepted(body_temp):
+    assert float(_valid_maternal_input(body_temp).body_temp) == body_temp
+
+
+@pytest.mark.parametrize("body_temp", [32.9, 43.1])
+def test_body_temp_outside_request_boundaries_rejected(body_temp):
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        _valid_maternal_input(body_temp)
+
+
 def test_model_unavailable_behavior_intact(tmp_path, monkeypatch):
     monkeypatch.setattr(paths, "artifacts_root", lambda: tmp_path)
     from app.models.maternal_risk import MaternalRiskService
