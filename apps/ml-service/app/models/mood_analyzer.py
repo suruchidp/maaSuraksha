@@ -20,11 +20,57 @@ from app.models.base_model import BaseModelService
 logger = logging.getLogger(__name__)
 
 
+def _normalize_pipeline_output(results: Any) -> list[dict[str, Any]]:
+    """Normalize a transformers TextClassificationPipeline output to a flat
+    list of {'label': str, 'score': float} dicts.
+
+    transformers 4.x returns [{'label':..., 'score':...}, ...] for a single
+    input. transformers 5.x returns [[{'label':..., ...}, ...]] (one inner
+    list per input). This handles both.
+    """
+    if results is None:
+        return []
+    if isinstance(results, dict):
+        return [results]
+    if isinstance(results, list):
+        if not results:
+            return []
+        first = results[0]
+        if isinstance(first, dict):
+            return [r for r in results if isinstance(r, dict)]
+        if isinstance(first, list):
+            flat: list[dict[str, Any]] = []
+            for item in first:
+                if isinstance(item, dict):
+                    flat.append(item)
+            return flat
+    return []
+
+
+def _build_label_map(metadata: dict[str, Any] | None) -> dict[str, str]:
+    """Build a pipeline-label -> human-label map.
+
+    HuggingFace assigns numeric ids to the classification head. The pipeline
+    exposes them as 'LABEL_0', 'LABEL_1', ... The metadata records the
+    human-readable label order in `labels` (index == id). We build the
+    translation table from that. If metadata is missing or incomplete, fall
+    back to identity (i.e. the pipeline labels as-is).
+    """
+    md = metadata or {}
+    human_labels = [str(x) for x in (md.get("labels") or [])]
+    if not human_labels:
+        return {}
+    return {f"LABEL_{i}": label for i, label in enumerate(human_labels)}
+
+
 class MoodAnalysisService(BaseModelService):
     def __init__(self) -> None:
         super().__init__("mood")
         self._model: Any | None = None
+        # Populated at load time from metadata; fallback used only if artifact
+        # metadata is missing (shouldn't happen when artifact_available()).
         self._labels: list[str] = ["negative", "neutral", "positive"]
+        self._label_map: dict[str, str] = {}
 
     def _load(self) -> Any | None:
         if not self.artifact_available():
@@ -33,6 +79,7 @@ class MoodAnalysisService(BaseModelService):
             return self._model
         md = self.metadata or {}
         self._labels = [str(x) for x in (md.get("labels") or self._labels)]
+        self._label_map = _build_label_map(md)
         model_dir = paths.nlp_model_dir(self.name)
         try:
             from transformers import (
@@ -68,16 +115,28 @@ class MoodAnalysisService(BaseModelService):
             return self._rule_based_response(text, language, safety)
 
         try:
-            results = pipeline(text, truncation=True)
+            raw = pipeline(text, truncation=True)
         except Exception as exc:  # pragma: no cover - defensive
             logger.error("Mood model inference failed: %s", exc)
             return self._rule_based_response(text, language, safety)
 
-        scored: list[tuple[str, float]] = []
-        label_to_score = {str(r["label"]): float(r["score"]) for r in results}
-        for label in self._labels:
-            score = label_to_score.get(label, 0.0)
-            scored.append((label, score))
+        scored_items = _normalize_pipeline_output(raw)
+        if not scored_items:
+            return self._rule_based_response(text, language, safety)
+
+        # Translate pipeline labels (LABEL_0, LABEL_1, ...) into human labels.
+        # If metadata didn't provide a map, leave the label as-is.
+        translated: list[tuple[str, float]] = []
+        for item in scored_items:
+            raw_label = str(item.get("label", ""))
+            human_label = self._label_map.get(raw_label, raw_label)
+            translated.append((human_label, float(item.get("score", 0.0))))
+
+        # Ensure every expected label is represented (defensive fill with 0).
+        present = {lbl: sc for lbl, sc in translated}
+        scored: list[tuple[str, float]] = [
+            (label, present.get(label, 0.0)) for label in self._labels
+        ]
         scored.sort(key=lambda pair: pair[1], reverse=True)
         top_label, top_score = scored[0]
 

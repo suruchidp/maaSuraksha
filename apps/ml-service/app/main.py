@@ -6,7 +6,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .core.config import settings
 from .models.registry import model_registry
-from .routers import gdm, health, maternal_risk, models_status, mood, ppd
+from .routers import (
+    gdm,
+    health,
+    maternal_risk,
+    models_status,
+    mood,
+    ppd,
+    ppd_screening,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -57,6 +65,11 @@ def create_app() -> FastAPI:
     app.include_router(maternal_risk.router, prefix="/api/v1/maternal-risk", tags=["Maternal Risk"])
     app.include_router(gdm.router, prefix="/api/v1/gdm", tags=["GDM"])
     app.include_router(ppd.router, prefix="/api/v1/ppd", tags=["PPD Screening"])
+    app.include_router(
+        ppd_screening.router,
+        prefix="/api/v1/ppd",
+        tags=["PPD Screening (longitudinal)"],
+    )
     app.include_router(mood.router, prefix="/api/v1/mood", tags=["Mood Analysis"])
 
     return app
