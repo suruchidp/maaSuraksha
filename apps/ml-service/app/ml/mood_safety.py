@@ -41,6 +41,25 @@ NEGATIVE_KEYWORDS = {
 
 SUPPORTED_LANGUAGES = ("en", "hi", "kn")
 
+SAFETY_MESSAGES = {
+    "en": {
+        "escalation": "SAFETY ESCALATION: Distress content detected. If you or someone you know is in crisis, please seek immediate professional help.",
+        "clear": "No crisis language detected.",
+    },
+    "hi": {
+        "escalation": "सुरक्षा चेतावनी: संकट की भाषा पाई गई। यदि आप या आपका कोई परिचित संकट में है, तो कृपया तत्काल पेशेवर सहायता लें।",
+        "clear": "संकट की भाषा नहीं पाई गई।",
+    },
+    "kn": {
+        "escalation": "ಸುರಕ್ಷತಾ ಎಚ್ಚರಿಕೆ: ಸಂಕಷ್ಟದ ಭಾಷೆ ಪತ್ತೆಯಾಗಿದೆ. ನೀವು ಅಥವಾ ನಿಮಗೆ ತಿಳಿದಿರುವ ಯಾರಾದರೂ ಸಂಕಷ್ಟದಲ್ಲಿದ್ದರೆ, ದಯವಿಟ್ಟು ತಕ್ಷಣ ವೃತ್ತಿಪರ ಸಹಾಯ ಪಡೆಯಿರಿ.",
+        "clear": "ಸಂಕಷ್ಟದ ಭಾಷೆ ಪತ್ತೆಯಾಗಿಲ್ಲ.",
+    },
+}
+
+
+def _message(lang, key):
+    return SAFETY_MESSAGES.get(lang, SAFETY_MESSAGES["en"]).get(key, SAFETY_MESSAGES["en"][key])
+
 
 @dataclass
 class SafetyResult:
@@ -64,11 +83,11 @@ class SafetyResult:
         }
 
 
-def _normalize_language(language: str) -> str:
+def _normalize_language(language):
     return language if language in SUPPORTED_LANGUAGES else "en"
 
 
-def analyze_safety(text: str, language: str = "en") -> SafetyResult:
+def analyze_safety(text, language="en"):
     lang = _normalize_language(language)
     text_lower = text.lower()
 
@@ -92,12 +111,7 @@ def analyze_safety(text: str, language: str = "en") -> SafetyResult:
     return SafetyResult(
         safety_flag=safety_flag,
         safety_keywords=matched_distress,
-        safety_message=(
-            "SAFETY ESCALATION: Distress content detected. If you or someone "
-            "you know is in crisis, please seek immediate professional help."
-            if safety_flag
-            else "No crisis language detected."
-        ),
+        safety_message=_message(lang, "escalation" if safety_flag else "clear"),
         positive_signals=positive_count,
         negative_signals=negative_count,
         rule_based_sentiment=sentiment,
