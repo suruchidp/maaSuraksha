@@ -25,7 +25,6 @@ import AppointmentsPage from "@/pages/patient/Appointments";
 import HomeVisitsPage from "@/pages/patient/HomeVisits";
 import ReferralsPage from "@/pages/patient/Referrals";
 import EducationPage from "@/pages/patient/Education";
-import ChatbotPage from "@/pages/patient/Chatbot";
 import ReportsPage from "@/pages/patient/Reports";
 
 import ASHADashboardPage from "@/pages/asha/Dashboard";
@@ -119,7 +118,6 @@ export default function App() {
                 <Route path="home-visits" element={<HomeVisitsPage />} />
                 <Route path="referrals" element={<ReferralsPage />} />
                 <Route path="education" element={<EducationPage />} />
-                <Route path="chat" element={<ChatbotPage />} />
                 <Route path="reports" element={<ReportsPage />} />
               </Route>
             </Route>
