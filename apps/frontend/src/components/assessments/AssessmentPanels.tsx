@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -459,8 +459,10 @@ export function PPDPanel({ userId }: PPDPanelProps) {
   });
 
   const values = watch("edinburghAnswers");
+  const submittedTextRef = useRef("");
 
   const onSubmit = (data: { edinburghAnswers: number[]; screeningText?: string }) => {
+    submittedTextRef.current = data.screeningText?.trim() ?? "";
     create.mutate(
       {
         user: userId,
@@ -538,36 +540,56 @@ export function PPDPanel({ userId }: PPDPanelProps) {
       {create.isPending && <Spinner />}
 
       {result && (
-        <AssessmentResult
-          title={t("assessments.ppd.result")}
-          status={result.status}
-          riskLevel={result.severity}
-          recommendations={result.recommendations}
-          message={result.message}
-          modelVersion={result.modelVersion}
-        >
+        <>
+          {result.status === "pending" && !submittedTextRef.current && (
+            <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800 mb-3">
+              <p className="font-medium">{t("assessments.ppd.pendingTitle")}</p>
+              <p className="mt-1">{t("assessments.ppd.pendingBody")}</p>
+            </div>
+          )}
+          <AssessmentResult
+            title={t("assessments.ppd.result")}
+            status={result.status}
+            riskLevel={result.severity}
+            recommendations={result.recommendations}
+            message={
+              result.status === "pending" && !submittedTextRef.current
+                ? undefined
+                : result.message
+            }
+            modelVersion={result.modelVersion}
+          >
           {typeof result.edinburghScore === "number" && (
             <p className="text-sm text-gray-700 mb-1">
               {t("assessments.ppd.epdsScore")}: <strong>{result.edinburghScore}</strong>
             </p>
           )}
           {result.nlpAnalysis && (
-            <div className="mb-2">
-              <p className="text-sm text-gray-700">
-                {t("assessments.ppd.sentiment")}: {t(`mood.sentiment.${result.nlpAnalysis.sentiment}`, { defaultValue: result.nlpAnalysis.sentiment })}
-              </p>
-              {(result.nlpAnalysis.keywords?.length ?? 0) > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {result.nlpAnalysis.keywords.map((k) => (
-                    <span key={k} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
-                      {k}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+  <div className="mb-2">
+    <p className="text-sm text-gray-700">
+      {t("assessments.ppd.sentiment")}:{" "}
+      {result.nlpAnalysis.sentiment === "negative_screen"
+        ? "Negative"
+        : result.nlpAnalysis.sentiment === "positive_screen"
+          ? "Positive"
+          : result.nlpAnalysis.sentiment}
+    </p>
+    {(result.nlpAnalysis.keywords?.length ?? 0) > 0 && (
+      <div className="flex flex-wrap gap-1 mt-1">
+        {result.nlpAnalysis.keywords.map((k) => (
+          <span
+            key={k}
+            className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded"
+          >
+            {k}
+          </span>
+        ))}
+      </div>
+    )}
+  </div>
+)}
         </AssessmentResult>
+        </>
       )}
 
       <AssessmentHistory title={t("assessments.ppd.history")} loading={history.isLoading} error={history.error?.message} onRetry={() => history.refetch()}>

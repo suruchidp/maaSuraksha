@@ -417,6 +417,8 @@
       },
       "result": "PPD Screening Result",
       "epdsScore": "EPDS Score",
+      "pendingTitle": "Screening incomplete — description required",
+      "pendingBody": "Your EPDS answers were saved, but the NLP-based screening could not be run because you did not describe how you have been feeling. Write a short description of your mood and feelings in the “How have you been feeling?” box and submit again.",
       "sentiment": "Feelings",
       "history": "Previous Screenings"
     }

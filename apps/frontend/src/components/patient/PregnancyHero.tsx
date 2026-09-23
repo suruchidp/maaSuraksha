@@ -70,7 +70,7 @@ export function PregnancyHero({
         </div>
 
         <div className="hidden lg:block w-52 shrink-0 drop-shadow-lg">
-          <MaternalHero id="dash-hero" />
+          <MaternalHero />
         </div>
       </div>
     </section>

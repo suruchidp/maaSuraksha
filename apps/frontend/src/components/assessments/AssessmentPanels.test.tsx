@@ -185,6 +185,33 @@ describe("AssessmentPanels submission", () => {
     expect(payload).toMatchObject({ user: "u1" });
     expect(payload.edinburghAnswers).toEqual(Array(10).fill(1));
   });
+
+  it("PPD: a pending result without a saved description explains what the user must provide", () => {
+    mocks.useCreatePPD.mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+      data: {
+        id: "p1",
+        user: "u1",
+        assessedBy: "u1",
+        status: "pending",
+        edinburghAnswers: Array(10).fill(1),
+        edinburghScore: 13,
+        screeningText: "",
+        recommendations: [],
+        message:
+          "Model inference is not available in this environment yet. The assessment inputs were validated and stored, but no risk score, classification or SHAP explanation has been computed.",
+      },
+    });
+    render(<PPDPanel userId="u1" />);
+
+    expect(screen.getByText("Screening incomplete — description required")).toBeInTheDocument();
+    expect(
+      screen.getByText(/write a short description of your mood and feelings/i)
+    ).toBeInTheDocument();
+    expect(screen.getByText(/EPDS Score/)).toBeInTheDocument();
+    expect(screen.queryByText(/Model inference is not available/)).not.toBeInTheDocument();
+  });
 });
 
 const stubT = ((key: string, params?: Record<string, unknown>) =>

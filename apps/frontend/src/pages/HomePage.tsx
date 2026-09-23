@@ -69,7 +69,7 @@ export default function HomePage() {
               </div>
 
               <div className="hidden lg:block w-80 mx-auto drop-shadow-xl">
-                <MaternalHero id="home-hero" />
+                <MaternalHero />
               </div>
             </div>
           </div>
