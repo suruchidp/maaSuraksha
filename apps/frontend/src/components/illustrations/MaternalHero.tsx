@@ -2,6 +2,8 @@
    an SVG so no external image assets are required. Abstract and tasteful by
    design: soft shapes, no detailed facial features, muted palette. */
 
+import pregnancyImage from "../../assets/pregnancy_transparent.png";
+
 export function MaternalHero({
   className = "",
 }: {
@@ -9,7 +11,7 @@ export function MaternalHero({
 }) {
   return (
     <img
-      src="/src/assets/pregnancy_transparent.png"
+      src={pregnancyImage}
       alt="Pregnant woman"
       className={`w-full h-auto object-contain ${className}`}
     />

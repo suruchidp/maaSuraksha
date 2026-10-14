@@ -303,12 +303,18 @@ export async function createPPDAssessment(
     // storing the ML "risk_level" verbatim (high | low), which is not a valid
     // member of PPDSeverity. A positive screen plus an EPDS score >= 13 is the
     // classic "probable depression" band; anything lower is moderate triage.
-    const severity: PPDSeverity =
-      ml.prediction === "positive_screen"
-        ? (edinburghScore ?? 0) >= 13
-          ? PPDSeverity.SEVERE
-          : PPDSeverity.MODERATE
-        : PPDSeverity.NONE;
+    const score = edinburghScore ?? 0;
+
+const severity: PPDSeverity =
+  score >= 13
+    ? PPDSeverity.SEVERE
+    : score >= 10
+      ? PPDSeverity.MODERATE
+      : score >= 7
+        ? PPDSeverity.MILD
+        : ml.prediction === "positive_screen"
+          ? PPDSeverity.MILD
+          : PPDSeverity.NONE;
     await PPDAssessment.updateOne(
       { _id: assessment._id },
       {
