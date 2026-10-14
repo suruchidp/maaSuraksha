@@ -90,7 +90,10 @@ describe("ML honesty policy (pending state, no fabricated scores)", () => {
     expect(res.body.data.edinburghAnswers).toEqual([1, 0, 0, 1, 0, 0, 1, 0, 0, 1]);
     expect(res.body.data.edinburghScore).toBe(4);
     expect(res.body.data.severity).toBeUndefined();
-    expect(res.body.data.message).toContain("not available");
+    expect(res.body.data.message).toContain("EPDS screening score recorded");
+    expect(res.body.data.message).toContain("NLP text analysis was not performed");
+    expect(res.body.data.message).toContain("not a diagnosis");
+    expect(res.body.data.safetyFlag).toBe(true);
   });
 
   it("stores mood journal entries without a fabricated sentiment", async () => {

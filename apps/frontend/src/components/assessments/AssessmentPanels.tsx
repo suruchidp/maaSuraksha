@@ -567,12 +567,12 @@ export function PPDPanel({ userId }: PPDPanelProps) {
           {result.nlpAnalysis && (
   <div className="mb-2">
     <p className="text-sm text-gray-700">
-      {t("assessments.ppd.sentiment")}:{" "}
+      <strong>Text screening result:</strong>{" "}
       {result.nlpAnalysis.sentiment === "negative_screen"
-        ? "Negative"
-        : result.nlpAnalysis.sentiment === "positive_screen"
-          ? "Positive"
-          : result.nlpAnalysis.sentiment}
+      ? "Negative screen"
+      : result.nlpAnalysis.sentiment === "positive_screen"
+      ? "Positive screen"
+      : result.nlpAnalysis.sentiment}
     </p>
     {(result.nlpAnalysis.keywords?.length ?? 0) > 0 && (
       <div className="flex flex-wrap gap-1 mt-1">

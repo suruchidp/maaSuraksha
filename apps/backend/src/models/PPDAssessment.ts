@@ -8,6 +8,7 @@ export interface IPPDAssessmentDocument extends Document {
   edinburghAnswers?: number[];
   edinburghScore?: number;
   severity?: PPDSeverity;
+  safetyFlag?: boolean;
   riskFactors: string[];
   screeningText?: string;
   modelConfidence?: number;
@@ -58,6 +59,7 @@ const ppdAssessmentSchema = new Schema<IPPDAssessmentDocument>(
         type: String,
         enum: Object.values(PPDSeverity),
       },
+      safetyFlag: { type: Boolean, default: false },
       riskFactors: [{ type: String }],
       screeningText: { type: String },
       modelConfidence: { type: Number, min: 0, max: 1 },

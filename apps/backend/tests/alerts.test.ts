@@ -36,6 +36,24 @@ describe('alert rules', () => {
   expect(evaluateAlerts({user:'u',ppd:{_id:'p',status:'completed',severity:'severe'}},now)[0]).toMatchObject({rule:'ppd-risk',type:'assessment',severity:'urgent'});
   expect(evaluateAlerts({user:'u',ppd:{_id:'p',status:'completed',severity:'moderate'}},now)[0]).toMatchObject({rule:'ppd-risk',type:'assessment',severity:'warning'});
  });
+ it('raises an urgent PPD safety alert even when the assessment is pending', () => {
+  const result = evaluateAlerts({
+   user: 'u',
+   ppd: {
+    _id: 'ppd-safety-test',
+    status: 'pending',
+    safetyFlag: true,
+   },
+  }, now);
+
+  expect(result).toHaveLength(1);
+  expect(result[0]).toMatchObject({
+   rule: 'ppd-safety',
+   type: 'mood_safety',
+   severity: 'urgent',
+  });
+  expect(result[0]?.message).not.toContain('screeningText');
+ });
  it('raises a mood safety alert for a recent flagged entry without quoting journal text', () => {
   const recent={user:'u',mood:{_id:'m',createdAt:new Date('2030-06-01T05:00:00Z'),safetyFlag:true}};
   const signal=evaluateAlerts(recent,now)[0];

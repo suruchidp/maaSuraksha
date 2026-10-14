@@ -116,17 +116,22 @@ describe("request validation", () => {
       .send({ date: "2026-10-01", time: "10:00", type: "checkup" });
     expect(res.status).toBe(400);
   });
-
   it("accepts a valid appointment", async () => {
-    const res = await api()
-      .post("/api/v1/appointments")
-      .set("Authorization", `Bearer ${token}`)
-      .send({
-        patient: userId,
-        date: "2026-10-01",
-        time: "10:00",
-        type: "checkup",
-      });
-    expect(res.status).toBe(201);
-  });
+   const future = new Date(Date.now() + 24 * 60 * 60 * 1000);
+   const date = new Date(
+    future.getTime() + 330 * 60 * 1000
+  ).toISOString().slice(0, 10);
+
+  const res = await api()
+    .post("/api/v1/appointments")
+    .set("Authorization", `Bearer ${token}`)
+    .send({
+      patient: userId,
+      date,
+      time: "23:59",
+      type: "checkup",
+    });
+
+  expect(res.status).toBe(201);
+});
 });

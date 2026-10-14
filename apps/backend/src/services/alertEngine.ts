@@ -19,7 +19,7 @@ export interface AlertContext {
  pregnancy?: { _id: unknown; expectedDueDate: Date; isHighRisk: boolean; lmp?: Date; status?: string; milestoneCompletions?: {key:string}[] } | null;
  maternal?: { _id: unknown; status: string; riskLevel?: string } | null;
  gdm?: { _id: unknown; status: string; riskLevel?: string } | null;
- ppd?: { _id: unknown; status: string; severity?: string } | null;
+ ppd?: { _id: unknown; status: string; severity?: string; safetyFlag?: boolean; } | null;
  mood?: { _id: unknown; createdAt: Date; safetyFlag: boolean } | null;
  symptoms?: { _id: unknown; date: Date; symptoms: string[]; severity: string }[];
  appointments?: { _id: unknown; date: Date; time: string; status: string; scheduleVersion?: number }[];
@@ -66,6 +66,17 @@ export function evaluateAlerts(ctx: AlertContext, now = new Date()): Signal[] {
    `Your completed perinatal depression screening reports ${ctx.ppd.severity === 'severe' ? 'a severe' : 'moderate'} result. ${ctx.ppd.severity === 'severe' ? 'Contact your care team promptly.' : 'Arrange a review with your care team.'} A screening result is not a diagnosis.`,
    `ppd:${ctx.ppd._id}:${ctx.ppd.severity}`);
  }
+// EPDS item 10 safety concern: escalate regardless of model status or text analysis.
+if (ctx.ppd?.safetyFlag) {
+  add(
+    'ppd-safety',
+    'mood_safety',
+    AlertSeverity.URGENT,
+    'Urgent perinatal mental health support',
+    'Your EPDS response indicates a potential safety concern. Please reach out to your maternity care team or a trusted person now. If you may act on thoughts of self-harm or are in immediate danger, contact local emergency services. This screening is not a diagnosis.',
+    `ppd-safety:${ctx.ppd._id}`
+  );
+}
  // Mood safety flag (recent analyzed journal entry). The alert never quotes the
  // journal text: it is a notice that the entry triggered the safety heuristic.
  if (ctx.mood?.safetyFlag && now.getTime() - ctx.mood.createdAt.getTime() <= 86400000) {

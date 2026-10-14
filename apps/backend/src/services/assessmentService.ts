@@ -20,6 +20,13 @@ const UNAVAILABLE_MESSAGE =
   "classification or SHAP explanation has been computed. " +
   "The ML service did not return a real model result, so nothing was invented.";
 
+// EPDS free-text is optional. When it is omitted the NLP text screen is
+// intentionally skipped, so we must not report the generic model-unavailable
+// error — that would imply a failed ML call rather than a deliberate skip.
+const PPD_TEXT_NOT_PROVIDED_MESSAGE =
+  "EPDS screening score recorded. No free-text description was provided, so " +
+  "the NLP text analysis was not performed. This is a screening score, not a diagnosis.";
+
 /**
  * Maternal risk endpoint. Validates + stores inputs; requests a REAL result
  * from the ML service best-effort. Never fabricates a risk score: if the ML
@@ -260,6 +267,12 @@ export async function createPPDAssessment(
       ? input.edinburghAnswers.reduce((sum, n) => sum + Number(n), 0)
       : undefined;
 
+  // EPDS item 10 asks about thoughts of self-harm. Any answer above "not at
+  // all" is a safety concern that must escalate regardless of the ordinary
+  // screening result, so it is persisted and surfaced as an urgent alert.
+  const safetyFlag = (input.edinburghAnswers?.[9] ?? 0) >= 1;
+  const screeningText = input.screeningText?.trim() || undefined;
+
   const assessment = await PPDAssessment.create({
     user: userId,
     assessedBy: actor.userId,
@@ -268,60 +281,73 @@ export async function createPPDAssessment(
     recommendations: [],
     edinburghAnswers: input.edinburghAnswers,
     edinburghScore,
-    screeningText: input.screeningText,
+    safetyFlag,
+    screeningText,
   });
 
-  if (input.screeningText) {
-    const ml = await predictPPD(input.screeningText, "en");
-    if (ml.available) {
-      // The PPD classifier is a binary screen (positive_screen | negative_screen).
-      // Translate it deterministically into the shared PPDSeverity enum instead of
-      // storing the ML "risk_level" verbatim (high | low), which is not a valid
-      // member of PPDSeverity. A positive screen plus an EPDS score >= 13 is the
-      // classic "probable depression" band; anything lower is moderate triage.
-      const severity: PPDSeverity =
-        ml.prediction === "positive_screen"
-          ? (edinburghScore ?? 0) >= 13
-            ? PPDSeverity.SEVERE
-            : PPDSeverity.MODERATE
-          : PPDSeverity.NONE;
-      await PPDAssessment.updateOne(
-        { _id: assessment._id },
-        {
-          $set: {
-            status: "completed",
-            severity,
-            modelConfidence: ml.probability,
-            modelVersion: ml.modelVersion,
-            nlpAnalysis: {
-              sentiment: ml.prediction,
-              keywords: [],
-              riskIndicators: [],
-            },
-          },
-        }
-      );
-
-      await refreshAlertsAfterWrite(userId);
-  const recommendationTitles = await refreshRecommendationsForAssessment(
-        userId,
-        String(assessment._id)
-      );
-      if (recommendationTitles.length > 0) {
-        await PPDAssessment.updateOne(
-          { _id: assessment._id },
-          { $set: { recommendations: recommendationTitles } }
-        );
-      }
-
-      const updated = await PPDAssessment.findById(assessment._id);
-      return {
-        ...toPPDDto(updated ?? assessment),
-        message: `PPD screening completed by the ML service (model ${ml.modelVersion}).`,
-      };
-    }
+  // No free-text: text screening is intentionally skipped. Return the EPDS
+  // score with an honest, specific message; never a generic model-unavailable
+  // error. Alerts still refresh so an EPDS q10 safety concern escalates.
+  if (!screeningText) {
+    await refreshAlertsAfterWrite(userId);
+    return {
+      ...toPPDDto(assessment),
+      message: PPD_TEXT_NOT_PROVIDED_MESSAGE,
+    };
   }
 
+  const ml = await predictPPD(screeningText, "en");
+  if (ml.available) {
+    // The PPD classifier is a binary screen (positive_screen | negative_screen).
+    // Translate it deterministically into the shared PPDSeverity enum instead of
+    // storing the ML "risk_level" verbatim (high | low), which is not a valid
+    // member of PPDSeverity. A positive screen plus an EPDS score >= 13 is the
+    // classic "probable depression" band; anything lower is moderate triage.
+    const severity: PPDSeverity =
+      ml.prediction === "positive_screen"
+        ? (edinburghScore ?? 0) >= 13
+          ? PPDSeverity.SEVERE
+          : PPDSeverity.MODERATE
+        : PPDSeverity.NONE;
+    await PPDAssessment.updateOne(
+      { _id: assessment._id },
+      {
+        $set: {
+          status: "completed",
+          severity,
+          modelConfidence: ml.probability,
+          modelVersion: ml.modelVersion,
+          nlpAnalysis: {
+            sentiment: ml.prediction,
+            keywords: [],
+            riskIndicators: [],
+          },
+        },
+      }
+    );
+
+    await refreshAlertsAfterWrite(userId);
+    const recommendationTitles = await refreshRecommendationsForAssessment(
+      userId,
+      String(assessment._id)
+    );
+    if (recommendationTitles.length > 0) {
+      await PPDAssessment.updateOne(
+        { _id: assessment._id },
+        { $set: { recommendations: recommendationTitles } }
+      );
+    }
+
+    const updated = await PPDAssessment.findById(assessment._id);
+    return {
+      ...toPPDDto(updated ?? assessment),
+      message: `PPD screening completed by the ML service (model ${ml.modelVersion}).`,
+    };
+  }
+
+  // Text was provided but the model is genuinely unavailable. Alerts still
+  // refresh so an EPDS q10 safety concern escalates even without a text screen.
+  await refreshAlertsAfterWrite(userId);
   return {
     ...toPPDDto(assessment),
     message: UNAVAILABLE_MESSAGE,
@@ -433,6 +459,7 @@ function toPPDDto(a: InstanceType<typeof PPDAssessment>) {
     status: a.status,
     edinburghAnswers: a.edinburghAnswers,
     edinburghScore: a.edinburghScore,
+    safetyFlag: a.safetyFlag,
     severity: a.severity,
     riskFactors: a.riskFactors,
     screeningText: a.screeningText,

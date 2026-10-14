@@ -305,9 +305,10 @@ export function useCreateMoodEntry() {
   return useMutation({
     mutationFn: ({ input, userId }: { input: unknown; userId?: string }) =>
       createMoodEntry(input as never, userId),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: qk.mood(undefined) });
-    },
+      onSuccess: () => {
+       void qc.invalidateQueries({ queryKey: ["mood"] });
+      },
+
   });
 }
 
